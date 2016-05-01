@@ -38,6 +38,8 @@ void setup()
 
 void loop()
 {
+  // adding a test comment
+  
   audio_freeze_interface.update();
 
   if( audio_freeze_interface.freeze_button().active() != audio_freeze_effect.is_freeze_active() )
