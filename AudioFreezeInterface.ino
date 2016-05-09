@@ -3,12 +3,16 @@
 
 #define LENGTH_DIAL_PIN         16
 #define POSITION_DIAL_PIN       17
-#define FREEZE_BUTTON_PIN       0
+#define SPEED_DIAL_PIN            20
+#define MIX_DIAL_PIN            21
+#define FREEZE_BUTTON_PIN       1
 #define FREEZE_BUTTON_IS_TOGGLE false
   
 AUDIO_FREEZE_INTERFACE::AUDIO_FREEZE_INTERFACE() :
   m_length_dial( LENGTH_DIAL_PIN ),
   m_position_dial( POSITION_DIAL_PIN ),
+  m_speed_dial( SPEED_DIAL_PIN ),
+  m_mix_dial( MIX_DIAL_PIN ),
   m_freeze_button( FREEZE_BUTTON_PIN, FREEZE_BUTTON_IS_TOGGLE )
 {  
 }
@@ -23,6 +27,20 @@ void AUDIO_FREEZE_INTERFACE::update()
     m_length_dial.update() ;
     m_position_dial.update();
     m_freeze_button.update();
+
+
+  if( m_speed_dial.update() )
+  {
+    Serial.print("Speed ");
+    Serial.print(m_length_dial.value());
+    Serial.print("\n");
+  }
+  if( m_mix_dial.update() )
+  {
+    Serial.print("Mix ");
+    Serial.print(m_position_dial.value());
+    Serial.print("\n");   
+  }
   /* 
   if( m_length_dial.update() )
   {

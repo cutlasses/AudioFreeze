@@ -6,6 +6,8 @@ class AUDIO_FREEZE_INTERFACE
 {
   DIAL          m_length_dial;
   DIAL          m_position_dial;
+  DIAL          m_speed_dial;
+  DIAL          m_mix_dial;
 
   BUTTON        m_freeze_button;
 
