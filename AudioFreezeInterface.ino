@@ -1,11 +1,11 @@
 #include "AudioFreezeInterface.h"
 
 
-#define LENGTH_DIAL_PIN         16
+#define LENGTH_DIAL_PIN         20
 #define POSITION_DIAL_PIN       17
-#define SPEED_DIAL_PIN            20
-#define MIX_DIAL_PIN            21
-#define FREEZE_BUTTON_PIN       1
+#define SPEED_DIAL_PIN          21
+#define MIX_DIAL_PIN            16
+#define FREEZE_BUTTON_PIN       2
 #define FREEZE_BUTTON_IS_TOGGLE false
   
 AUDIO_FREEZE_INTERFACE::AUDIO_FREEZE_INTERFACE() :
@@ -32,16 +32,15 @@ void AUDIO_FREEZE_INTERFACE::update()
   if( m_speed_dial.update() )
   {
     Serial.print("Speed ");
-    Serial.print(m_length_dial.value());
+    Serial.print(m_speed_dial.value());
     Serial.print("\n");
   }
   if( m_mix_dial.update() )
   {
     Serial.print("Mix ");
-    Serial.print(m_position_dial.value());
+    Serial.print(m_mix_dial.value());
     Serial.print("\n");   
   }
-  /* 
   if( m_length_dial.update() )
   {
     Serial.print("Length ");
@@ -60,7 +59,6 @@ void AUDIO_FREEZE_INTERFACE::update()
   {
     Serial.print("on\n");
   }
-  */
 }
 
 const DIAL& AUDIO_FREEZE_INTERFACE::length_dial() const
