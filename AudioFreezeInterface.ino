@@ -24,11 +24,14 @@ void AUDIO_FREEZE_INTERFACE::setup()
 
 void AUDIO_FREEZE_INTERFACE::update()
 {
-    m_length_dial.update() ;
-    m_position_dial.update();
-    m_freeze_button.update();
+  m_length_dial.update() ;
+  m_position_dial.update();
+  m_speed_dial.update();
+  m_mix_dial.update();
+  
+  m_freeze_button.update();
 
-
+  /*
   if( m_speed_dial.update() )
   {
     Serial.print("Speed ");
@@ -46,19 +49,20 @@ void AUDIO_FREEZE_INTERFACE::update()
     Serial.print("Length ");
     Serial.print(m_length_dial.value());
     Serial.print("\n");
-  }
+  }*/
   if( m_position_dial.update() )
   {
     Serial.print("Position ");
     Serial.print(m_position_dial.value());
     Serial.print("\n");   
-  }
+  }/*
   m_freeze_button.update();
 
   if( m_freeze_button.active() )
   {
     Serial.print("on\n");
   }
+  */
 }
 
 const DIAL& AUDIO_FREEZE_INTERFACE::length_dial() const
