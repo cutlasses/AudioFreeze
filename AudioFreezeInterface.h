@@ -20,6 +20,8 @@ public:
 
   const DIAL&   length_dial() const;
   const DIAL&   position_dial() const;
+  const DIAL&   speed_dial() const;
+  const DIAL&   mix_dial() const;
   const BUTTON& freeze_button() const;
 };
 
