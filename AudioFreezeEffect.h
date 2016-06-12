@@ -2,20 +2,26 @@
 
 #include <AudioStream.h>
 
-#define FREEZE_QUEUE_SIZE     185
+#define FREEZE_QUEUE_SIZE_IN_BYTES     1024*40      // 40k
 
 
 class AUDIO_FREEZE_EFFECT : public AudioStream
 {
-  audio_block_t*        m_buffer[FREEZE_QUEUE_SIZE];
+  byte                  m_buffer[FREEZE_QUEUE_SIZE_IN_BYTES];
   audio_block_t*        m_input_queue_array[1];
   
-  int                   m_head;
+  int                   m_head;     // read head when audio is frozen, write head when not frozen
 
   int                   m_loop_start;
   int                   m_loop_end;
 
+  int                   m_sample_size_in_bits;
+
   bool                  m_freeze_active;
+
+
+  void                  write_to_buffer( const int16_t* source, int size );
+  void                  read_from_buffer( int16_t* dest, int size );
   
 public:
 

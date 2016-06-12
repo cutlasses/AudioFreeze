@@ -1,4 +1,5 @@
 #include "AudioFreezeInterface.h"
+#include "CompileSwitches.h"
 
 
 #define LENGTH_DIAL_PIN         20
@@ -31,6 +32,7 @@ void AUDIO_FREEZE_INTERFACE::update()
   
   m_freeze_button.update();
 
+#ifdef DEBUG_OUTPUT
   /*
   if( m_speed_dial.update() )
   {
@@ -63,6 +65,7 @@ void AUDIO_FREEZE_INTERFACE::update()
     Serial.print("on\n");
   }
   */
+#endif // DEBUG_OUTPUT
 }
 
 const DIAL& AUDIO_FREEZE_INTERFACE::length_dial() const
