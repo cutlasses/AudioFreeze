@@ -32,7 +32,7 @@ void setup()
 {
   Serial.begin(9600);
   //AudioMemory(FREEZE_QUEUE_SIZE+8);
-  AudioMemory(4);
+  AudioMemory(8);
   
   sgtl5000_1.enable();
   sgtl5000_1.volume(0.95f);
@@ -55,11 +55,14 @@ void loop()
 
 #ifdef DEBUG_OUTPUT
   static int updates = 0;
-  if( ++updates < 10 )
+  if( ++updates % 1000 == 0 )
   {
     Serial.print("Update ");
     Serial.print(updates);
     Serial.print("\n");
+
+    Serial.print("Speed ");
+    Serial.print(audio_freeze_interface.speed_dial().value());
   }
 #endif // DEBUG_OUTPUT
 
@@ -70,6 +73,7 @@ void loop()
 
   audio_freeze_effect.set_length( audio_freeze_interface.length_dial().value() );
   audio_freeze_effect.set_centre( audio_freeze_interface.position_dial().value() );
+  audio_freeze_effect.set_speed( audio_freeze_interface.speed_dial().value() );
 
   if( audio_freeze_interface.freeze_button().active() )
   {

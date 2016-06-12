@@ -10,7 +10,9 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
   byte                  m_buffer[FREEZE_QUEUE_SIZE_IN_BYTES];
   audio_block_t*        m_input_queue_array[1];
   
-  int                   m_head;     // read head when audio is frozen, write head when not frozen
+  float                 m_head;     // read head when audio is frozen, write head when not frozen
+
+  float                 m_speed;
 
   int                   m_loop_start;
   int                   m_loop_end;
@@ -22,6 +24,7 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
 
   void                  write_to_buffer( const int16_t* source, int size );
   void                  read_from_buffer( int16_t* dest, int size );
+  void                  read_from_buffer_with_speed( int16_t* dest, int size, float speed );
   
 public:
 
@@ -33,5 +36,6 @@ public:
   void                  set_freeze( bool active );
   void                  set_length( float length );
   void                  set_centre( float centre );
+  void                  set_speed( float speed );
 };
 
