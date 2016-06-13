@@ -30,41 +30,6 @@ AUDIO_FREEZE_EFFECT::AUDIO_FREEZE_EFFECT() :
   memset( m_buffer, 0, sizeof(m_buffer) );
 }
 
-/*
-void AUDIO_FREEZE_EFFECT::write_to_buffer( const int16_t* source, int size )
-{
-  const int fqs                     = freeze_queue_size_in_samples( m_sample_size_in_bits );
-
-  for( int x = 0; x < size; ++x )
-  {
-    // DO CONVERSION TO 8-bit HERE
-    int16_t* sample_buffer            = (int16_t*)m_buffer;
-    sample_buffer[m_head]             = source[x];
-
-    if( ++m_head == fqs )
-    {
-      m_head                        = 0;
-    }
-  }
-}
-
-void AUDIO_FREEZE_EFFECT::read_from_buffer( int16_t* dest, int size )
-{        
-    for( int x = 0; x < size; ++x )
-    {
-      int16_t* sample_buffer    = (int16_t*)m_buffer;
-
-      dest[x]                   = sample_buffer[ m_head ];
-      
-      // head will have limited movement in freeze mode
-      if( ++m_head >= m_loop_end )
-      {
-        m_head                  = m_loop_start;
-      } 
-    }
-}
-*/
-
 void AUDIO_FREEZE_EFFECT::write_to_buffer( const int16_t* source, int size )
 {
   const int fqs                     = freeze_queue_size_in_samples( m_sample_size_in_bits );
@@ -197,7 +162,7 @@ void AUDIO_FREEZE_EFFECT::set_speed( float speed )
   {
     // put in the range 0..1
     float r = ( speed - 0.5f ) * 2.0f;
-    m_speed = r * MAX_SPEED;   
+    m_speed = lerp( 1.0f, MAX_SPEED, r );    
   }
 }
 
