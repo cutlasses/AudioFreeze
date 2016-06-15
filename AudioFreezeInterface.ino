@@ -7,7 +7,7 @@
 #define SPEED_DIAL_PIN          21
 #define MIX_DIAL_PIN            16
 #define FREEZE_BUTTON_PIN       2
-#define FREEZE_BUTTON_IS_TOGGLE false
+#define FREEZE_BUTTON_IS_TOGGLE true
   
 AUDIO_FREEZE_INTERFACE::AUDIO_FREEZE_INTERFACE() :
   m_length_dial( LENGTH_DIAL_PIN ),
