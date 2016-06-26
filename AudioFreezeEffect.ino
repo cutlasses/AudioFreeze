@@ -1,4 +1,9 @@
 #include <Audio.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <SD.h>
+#include <SerialFlash.h>
+
 #include <Math.h>
 #include "AudioFreezeEffect.h"
 #include "CompileSwitches.h"

@@ -1,26 +1,31 @@
 #include "AudioFreezeInterface.h"
 #include "CompileSwitches.h"
-
-
-#define LENGTH_DIAL_PIN         20
-#define POSITION_DIAL_PIN       17
-#define SPEED_DIAL_PIN          21
-#define MIX_DIAL_PIN            16
-#define FREEZE_BUTTON_PIN       2
-#define FREEZE_BUTTON_IS_TOGGLE true
   
 AUDIO_FREEZE_INTERFACE::AUDIO_FREEZE_INTERFACE() :
   m_length_dial( LENGTH_DIAL_PIN ),
   m_position_dial( POSITION_DIAL_PIN ),
   m_speed_dial( SPEED_DIAL_PIN ),
   m_mix_dial( MIX_DIAL_PIN ),
-  m_freeze_button( FREEZE_BUTTON_PIN, FREEZE_BUTTON_IS_TOGGLE )
-{  
+  m_freeze_button( FREEZE_BUTTON_PIN, FREEZE_BUTTON_IS_TOGGLE ),
+  m_mode_button( MODE_BUTTON_PIN, false ),
+  m_leds(),
+  m_current_mode( 0 )
+{
+  m_leds[0] = LED( LED_1_PIN );
+  m_leds[1] = LED( LED_2_PIN );
+  m_leds[2] = LED( LED_3_PIN ); 
 }
 
 void AUDIO_FREEZE_INTERFACE::setup()
 {
   m_freeze_button.setup();
+  m_mode_button.setup();
+
+  for( int x = 0; x < NUM_LEDS; ++x )
+  {
+    m_leds[x].setup();
+    m_leds[x].set_brightness( 0.5f );
+  }
 }
 
 void AUDIO_FREEZE_INTERFACE::update()
@@ -31,6 +36,39 @@ void AUDIO_FREEZE_INTERFACE::update()
   m_mix_dial.update();
   
   m_freeze_button.update();
+  m_mode_button.update();
+
+  if( m_mode_button.single_click() )
+  {
+    m_current_mode = ( m_current_mode + 1 ) % NUM_LEDS;
+  }
+
+ #ifdef DEBUG_OUTPUT
+    if( m_freeze_button.active() )
+    {
+      Serial.print("Freeze\n");
+    }
+    if( m_mode_button.single_click() )
+    {
+      Serial.print("Mode ");
+      Serial.print(m_current_mode);
+      Serial.print("\n");
+    }
+#endif
+
+  for( int x = 0; x < NUM_LEDS; ++x )
+  {
+    if( x == m_current_mode )
+    {
+      m_leds[x].set_active( true );
+    }
+    else
+    {
+      m_leds[x].set_active( false );
+    }
+
+    m_leds[x].update();
+  }
 
 #ifdef DEBUG_OUTPUT
   /*

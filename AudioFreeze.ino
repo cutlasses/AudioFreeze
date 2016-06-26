@@ -1,6 +1,9 @@
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
+#include <SD.h>
+#include <SerialFlash.h>
+#include <Bounce.h>     // Arduino compiler can get confused if you don't include include all required headers in this file?!?
 
 #include "AudioFreezeEffect.h"
 #include "AudioFreezeInterface.h"
@@ -52,19 +55,6 @@ void setup()
 void loop()
 {
   audio_freeze_interface.update();
-
-#ifdef DEBUG_OUTPUT
-  static int updates = 0;
-  if( ++updates % 1000 == 0 )
-  {
-    Serial.print("Update ");
-    Serial.print(updates);
-    Serial.print("\n");
-
-    Serial.print("Speed ");
-    Serial.print(audio_freeze_interface.speed_dial().value());
-  }
-#endif // DEBUG_OUTPUT
 
   if( audio_freeze_interface.freeze_button().active() != audio_freeze_effect.is_freeze_active() )
   {

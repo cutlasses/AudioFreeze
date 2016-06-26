@@ -33,6 +33,7 @@ float DIAL::value() const
 BUTTON::BUTTON( int data_pin, bool is_toggle ) :
   m_data_pin( data_pin ),
   m_is_toggle( is_toggle ),
+  m_prev_is_active( false ),
   m_is_active( false ),
   m_bounce( m_data_pin, BOUNCE_TIME )
 {
@@ -43,6 +44,11 @@ bool BUTTON::active() const
   return m_is_active;
 }
 
+bool BUTTON::single_click() const
+{
+  return m_is_active && !m_prev_is_active;
+}
+
 void BUTTON::setup()
 {
   pinMode( m_data_pin, INPUT_PULLUP );
@@ -51,6 +57,8 @@ void BUTTON::setup()
 void BUTTON::update()
 {
   m_bounce.update();
+
+  m_prev_is_active = m_is_active;
 
   if( m_bounce.fallingEdge() )
   {
@@ -69,6 +77,47 @@ void BUTTON::update()
     {
       m_is_active = false;
     }
+  }
+}
+
+//////////////////////////////////////
+
+LED::LED() :
+  m_data_pin( 0 ),
+  m_is_active( false )
+{
+}
+
+LED::LED( int data_pin ) :
+  m_data_pin( data_pin ),
+  m_is_active( false )
+{
+}
+
+void LED::set_active( bool active )
+{
+  m_is_active = active;
+}
+
+void LED::set_brightness( float brightness )
+{
+  m_brightness = brightness * 255.0f;  
+}
+
+void LED::setup()
+{
+  pinMode( m_data_pin, OUTPUT );
+}
+
+void LED::update()
+{
+  if( m_is_active )
+  {
+    analogWrite( m_data_pin, m_brightness );
+  }
+  else
+  {
+    analogWrite( m_data_pin, 0 );
   }
 }
 
