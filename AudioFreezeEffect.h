@@ -20,8 +20,9 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
   int                   m_sample_size_in_bits;
 
   bool                  m_freeze_active;
+  bool                  m_smooth_audio;
 
-
+  int16_t               read_sample( int index ) const;
   void                  write_to_buffer( const int16_t* source, int size );
   void                  read_from_buffer( int16_t* dest, int size );
   void                  read_from_buffer_with_speed( int16_t* dest, int size, float speed );
@@ -37,5 +38,6 @@ public:
   void                  set_length( float length );
   void                  set_centre( float centre );
   void                  set_speed( float speed );
+  void                  set_smooth_audio( bool smooth );
 };
 

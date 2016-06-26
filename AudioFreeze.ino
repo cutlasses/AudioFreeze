@@ -65,6 +65,15 @@ void loop()
   audio_freeze_effect.set_centre( audio_freeze_interface.position_dial().value() );
   audio_freeze_effect.set_speed( audio_freeze_interface.speed_dial().value() );
 
+  if( audio_freeze_interface.mode() == 2 )
+  {
+    audio_freeze_effect.set_smooth_audio( true );
+  }
+  else
+  {
+    audio_freeze_effect.set_smooth_audio( false );
+  }
+
   if( audio_freeze_interface.freeze_button().active() )
   {
     const float freeze_mix_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );

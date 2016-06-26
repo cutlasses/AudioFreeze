@@ -11,6 +11,9 @@
 const float MIN_SPEED( 0.25f );
 const float MAX_SPEED( 4.0f );
 
+const int FILTER_SIZE( 3 );
+const float gaussian_filter[] = { 0.25f, 0.5f, 0.25f };
+
 /////////////////////////////////////////////////////////////////////
 
 int freeze_queue_size_in_samples( int sample_size_in_bits )
@@ -30,9 +33,54 @@ AUDIO_FREEZE_EFFECT::AUDIO_FREEZE_EFFECT() :
   m_loop_start(0),
   m_loop_end(freeze_queue_size_in_samples(16) - 1),
   m_sample_size_in_bits(16),
-  m_freeze_active(false)
+  m_freeze_active(false),
+  m_smooth_audio(false)
 {
   memset( m_buffer, 0, sizeof(m_buffer) );
+}
+
+int16_t AUDIO_FREEZE_EFFECT::read_sample( int index ) const
+{
+  const int16_t* sample_buffer    = reinterpret_cast<const int16_t*>(m_buffer);
+
+  if( m_smooth_audio )
+  {
+    float smoothed_sample( 0.0f );
+    int start_index = index - ( FILTER_SIZE / 2 );
+    if( start_index < m_loop_start )
+    {
+      start_index = m_loop_end - ( m_loop_start - start_index );
+    }
+    
+    for( int x = 0; x < FILTER_SIZE; ++x )
+    {
+      int i = start_index + x;
+      if( i >= m_loop_end )
+      {
+        i = m_loop_start;
+      }
+
+
+#ifdef DEBUG_OUTPUT
+      Serial.print("loop start:");
+      Serial.print(m_loop_start);
+      Serial.print(" loop end:");
+      Serial.print(m_loop_end);
+      Serial.print(" i:");
+      Serial.print(i);
+      Serial.print("\n");
+#endif // DEBUG_OUTPUT
+
+      float s = sample_buffer[ i ];
+      smoothed_sample += gaussian_filter[x] * s;
+    }
+
+    return roundf( smoothed_sample );
+  }
+  else
+  {
+    return sample_buffer[ index ];
+  }
 }
 
 void AUDIO_FREEZE_EFFECT::write_to_buffer( const int16_t* source, int size )
@@ -56,9 +104,7 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer( int16_t* dest, int size )
 {        
     for( int x = 0; x < size; ++x )
     {
-      int16_t* sample_buffer    = reinterpret_cast<int16_t*>(m_buffer);
-
-      dest[x]                   = sample_buffer[ trunc_to_int(m_head) ];
+      dest[x]                   = read_sample( trunc_to_int(m_head) );
       
       // head will have limited movement in freeze mode
       if( ++m_head >= m_loop_end )
@@ -69,9 +115,7 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer( int16_t* dest, int size )
 }
 
 void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size, float speed )
-{
-    int16_t* sample_buffer    = reinterpret_cast<int16_t*>(m_buffer);
-          
+{          
     for( int x = 0; x < size; ++x )
     {
       if( speed < 1.0f )
@@ -84,7 +128,7 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size, 
           next                  = m_loop_start;
         }
 
-        int16_t sample          = lerp( sample_buffer[curr], sample_buffer[next], speed );
+        int16_t sample          = lerp( read_sample(curr), read_sample(next), speed );
         dest[x]                 = sample;
 
         m_head                  += speed;
@@ -96,7 +140,7 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size, 
       }
       else
       {
-        dest[x]                 = sample_buffer[ trunc_to_int(m_head) ];
+        dest[x]                 = read_sample( trunc_to_int(m_head) );
         
         // head will have limited movement in freeze mode
         m_head                  += speed;
@@ -151,8 +195,8 @@ void AUDIO_FREEZE_EFFECT::set_freeze( bool active )
 
 void AUDIO_FREEZE_EFFECT::set_length( float length )
 {
-  int loop_length = roundf( length * freeze_queue_size_in_samples( m_sample_size_in_bits ) );
-  m_loop_end      = m_loop_start + loop_length;
+  const int loop_length = max_val<float>( roundf( length * freeze_queue_size_in_samples( m_sample_size_in_bits ) ), FILTER_SIZE );
+  m_loop_end            = m_loop_start + loop_length;
 }
 
 void AUDIO_FREEZE_EFFECT::set_speed( float speed )
@@ -189,6 +233,11 @@ void AUDIO_FREEZE_EFFECT::set_centre( float centre )
     m_loop_end      = fqs - 1;
     m_loop_start    = m_loop_end - loop_length;
   }
+}
+
+void AUDIO_FREEZE_EFFECT::set_smooth_audio( bool smooth )
+{
+  m_smooth_audio = smooth;
 }
 
 

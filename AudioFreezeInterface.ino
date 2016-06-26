@@ -131,3 +131,8 @@ const BUTTON& AUDIO_FREEZE_INTERFACE::freeze_button() const
   return m_freeze_button;
 }
 
+int AUDIO_FREEZE_INTERFACE::mode() const
+{
+  return m_current_mode;
+}
+
