@@ -61,13 +61,14 @@ int16_t AUDIO_FREEZE_EFFECT::read_sample( int index ) const
 
   if( m_cross_fade )
   {
-    const int CROSS_FADE_SAMPLES( 4400 ); // 100ms
+    const int CROSS_FADE_SAMPLES( 2200 ); // 50ms
     const int dist_to_loop_start = index - m_loop_start;
     if( dist_to_loop_start < CROSS_FADE_SAMPLES )
     {
       float r = dist_to_loop_start / static_cast<float>(CROSS_FADE_SAMPLES); // ratio through cross fade
       int16_t prev_sample_index = wrap_index_to_loop_section( index - CROSS_FADE_SAMPLES );
       int16_t prev_sample = sample_buffer[ prev_sample_index ];
+     
       return lerp( prev_sample, sample, r );
     }
 
@@ -77,6 +78,7 @@ int16_t AUDIO_FREEZE_EFFECT::read_sample( int index ) const
       float r = dist_to_loop_end / static_cast<float>(CROSS_FADE_SAMPLES); // ratio through cross fade
       int16_t next_sample_index = wrap_index_to_loop_section( index + CROSS_FADE_SAMPLES );
       int16_t next_sample = sample_buffer[ next_sample_index ];
+      
       return lerp( sample, next_sample, r );     
     }
 

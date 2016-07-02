@@ -46,7 +46,7 @@ void AUDIO_FREEZE_INTERFACE::update()
  #ifdef DEBUG_OUTPUT
     if( m_freeze_button.active() )
     {
-      Serial.print("Freeze\n");
+      //Serial.print("Freeze\n");
     }
     if( m_mode_button.single_click() )
     {
