@@ -27,7 +27,9 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
   int16_t               read_sample( int index ) const;
   void                  write_to_buffer( const int16_t* source, int size );
   void                  read_from_buffer( int16_t* dest, int size );
-  void                  read_from_buffer_with_speed( int16_t* dest, int size, float speed );
+  void                  read_from_buffer_with_speed( int16_t* dest, int size );
+  
+  float                 next_head( float inc ) const;
   
 public:
 

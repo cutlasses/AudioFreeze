@@ -59,32 +59,6 @@ int16_t AUDIO_FREEZE_EFFECT::read_sample( int index ) const
 
   const int16_t sample = sample_buffer[ index ];
 
-  if( m_cross_fade )
-  {
-    const int CROSS_FADE_SAMPLES( 2200 ); // 50ms
-    const int dist_to_loop_start = index - m_loop_start;
-    if( dist_to_loop_start < CROSS_FADE_SAMPLES )
-    {
-      float r = dist_to_loop_start / static_cast<float>(CROSS_FADE_SAMPLES); // ratio through cross fade
-      int16_t prev_sample_index = wrap_index_to_loop_section( index - CROSS_FADE_SAMPLES );
-      int16_t prev_sample = sample_buffer[ prev_sample_index ];
-     
-      return lerp( prev_sample, sample, r );
-    }
-
-    const int dist_to_loop_end = m_loop_end - index;
-    if( dist_to_loop_end < CROSS_FADE_SAMPLES )
-    {
-      float r = dist_to_loop_end / static_cast<float>(CROSS_FADE_SAMPLES); // ratio through cross fade
-      int16_t next_sample_index = wrap_index_to_loop_section( index + CROSS_FADE_SAMPLES );
-      int16_t next_sample = sample_buffer[ next_sample_index ];
-      
-      return lerp( sample, next_sample, r );     
-    }
-
-    // return unaltered sample
-  }
-
   return sample;
 }
 
@@ -119,42 +93,40 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer( int16_t* dest, int size )
     }
 }
 
-void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size, float speed )
+void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size )
 {          
     for( int x = 0; x < size; ++x )
     {
-      if( speed < 1.0f )
+      if( m_speed < 1.0f )
       {
-        int curr                = trunc_to_int(m_head);
-        int next                = curr + 1;
+        int curr                = trunc_to_int( m_head );
+        int next                = next_head( m_speed );
 
-        if( next >= m_loop_end )
-        {
-          next                  = m_loop_start;
-        }
-
-        int16_t sample          = lerp( read_sample(curr), read_sample(next), speed );
+        int16_t sample          = lerp( read_sample(curr), read_sample(next), m_speed );
         dest[x]                 = sample;
 
-        m_head                  += speed;
-
-        if( m_head >= m_loop_end )
-        {
-          m_head                = m_loop_start;
-        }
+        m_head                  = next_head( m_speed );
       }
       else
       {
         dest[x]                 = read_sample( trunc_to_int(m_head) );
         
-        // head will have limited movement in freeze mode
-        m_head                  += speed;
-        if( m_head >= m_loop_end )
-        {
-          m_head                = m_loop_start;
-        }
+        m_head                  = next_head( m_speed );
       }
     }
+}
+
+float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
+{
+  // head will have limited movement in freeze mode
+  float next_head( m_head );
+  next_head               += inc;
+  if( next_head >= m_loop_end )
+  {
+    next_head             = m_loop_start;
+  }
+
+   return next_head;
 }
 
 void AUDIO_FREEZE_EFFECT::update()
@@ -166,7 +138,7 @@ void AUDIO_FREEZE_EFFECT::update()
     if( block != nullptr )
     {
       //read_from_buffer( block->data, AUDIO_BLOCK_SAMPLES );
-      read_from_buffer_with_speed( block->data, AUDIO_BLOCK_SAMPLES, m_speed );
+      read_from_buffer_with_speed( block->data, AUDIO_BLOCK_SAMPLES );
   
       transmit( block, 0 );
     

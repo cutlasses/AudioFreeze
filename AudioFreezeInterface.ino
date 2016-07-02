@@ -40,7 +40,7 @@ void AUDIO_FREEZE_INTERFACE::update()
 
   if( m_mode_button.single_click() )
   {
-    m_current_mode = ( m_current_mode + 1 ) % NUM_LEDS;
+    m_current_mode = ( m_current_mode + 1 ) % 2; //NUM_LEDS;
   }
 
  #ifdef DEBUG_OUTPUT
