@@ -125,7 +125,9 @@ float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
     next_head               -= inc;
     if( next_head < m_loop_start )
     {
-      next_head             = m_loop_end;
+      double int_part;
+      const float frac      = fabs( modf( next_head, &int_part ) );
+      next_head             = m_loop_end + frac;
     }
   
     return next_head;    
@@ -136,7 +138,9 @@ float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
     next_head               += inc;
     if( next_head >= m_loop_end )
     {
-      next_head             = m_loop_start;
+      double int_part;
+      const float frac      = fabs( modf( next_head, &int_part ) );
+      next_head             = m_loop_start + frac;
     }
   
     return next_head;
