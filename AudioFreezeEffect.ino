@@ -32,7 +32,7 @@ AUDIO_FREEZE_EFFECT::AUDIO_FREEZE_EFFECT() :
   m_loop_end(freeze_queue_size_in_samples(16) - 1),
   m_sample_size_in_bits(16),
   m_freeze_active(false),
-  m_cross_fade(false)
+  m_reverse(false)
 {
   memset( m_buffer, 0, sizeof(m_buffer) );
 }
@@ -118,15 +118,29 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size )
 
 float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
 {
-  // head will have limited movement in freeze mode
-  float next_head( m_head );
-  next_head               += inc;
-  if( next_head >= m_loop_end )
+  // head will have limited movement in freeze mode - clamped between start and end
+  if( m_reverse )
   {
-    next_head             = m_loop_start;
+    float next_head( m_head );
+    next_head               -= inc;
+    if( next_head < m_loop_start )
+    {
+      next_head             = m_loop_end;
+    }
+  
+    return next_head;    
   }
-
-   return next_head;
+  else
+  {
+    float next_head( m_head );
+    next_head               += inc;
+    if( next_head >= m_loop_end )
+    {
+      next_head             = m_loop_start;
+    }
+  
+    return next_head;
+  }
 }
 
 void AUDIO_FREEZE_EFFECT::update()
@@ -212,9 +226,9 @@ void AUDIO_FREEZE_EFFECT::set_centre( float centre )
   }
 }
 
-void AUDIO_FREEZE_EFFECT::set_cross_fade( bool cross_fade )
+void AUDIO_FREEZE_EFFECT::set_reverse( bool reverse )
 {
-  m_cross_fade = cross_fade;
+  m_reverse = reverse;
 }
 
 

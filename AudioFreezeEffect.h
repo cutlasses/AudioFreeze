@@ -20,7 +20,7 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
   int                   m_sample_size_in_bits;
 
   bool                  m_freeze_active;
-  bool                  m_cross_fade;
+  bool                  m_reverse;
 
   int                   wrap_index_to_loop_section( int index ) const;
 
@@ -42,6 +42,6 @@ public:
   void                  set_length( float length );
   void                  set_centre( float centre );
   void                  set_speed( float speed );
-  void                  set_cross_fade( bool cross_fade );
+  void                  set_reverse( bool reverse );
 };
 

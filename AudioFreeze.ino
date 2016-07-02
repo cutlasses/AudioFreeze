@@ -65,13 +65,13 @@ void loop()
   audio_freeze_effect.set_centre( audio_freeze_interface.position_dial().value() );
   audio_freeze_effect.set_speed( audio_freeze_interface.speed_dial().value() );
 
-  if( audio_freeze_interface.mode() == 2 )
+  if( audio_freeze_interface.mode() == 1 )
   {
-    audio_freeze_effect.set_cross_fade( true );
+    audio_freeze_effect.set_reverse( true );
   }
   else
   {
-    audio_freeze_effect.set_cross_fade( false );
+    audio_freeze_effect.set_reverse( false );
   }
 
   if( audio_freeze_interface.freeze_button().active() )
