@@ -67,11 +67,11 @@ void loop()
 
   if( audio_freeze_interface.mode() == 2 )
   {
-    audio_freeze_effect.set_smooth_audio( true );
+    audio_freeze_effect.set_cross_fade( true );
   }
   else
   {
-    audio_freeze_effect.set_smooth_audio( false );
+    audio_freeze_effect.set_cross_fade( false );
   }
 
   if( audio_freeze_interface.freeze_button().active() )

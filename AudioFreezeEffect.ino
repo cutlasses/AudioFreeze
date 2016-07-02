@@ -11,8 +11,6 @@
 const float MIN_SPEED( 0.25f );
 const float MAX_SPEED( 4.0f );
 
-const int FILTER_SIZE( 3 );
-const float gaussian_filter[] = { 0.25f, 0.5f, 0.25f };
 
 /////////////////////////////////////////////////////////////////////
 
@@ -34,53 +32,58 @@ AUDIO_FREEZE_EFFECT::AUDIO_FREEZE_EFFECT() :
   m_loop_end(freeze_queue_size_in_samples(16) - 1),
   m_sample_size_in_bits(16),
   m_freeze_active(false),
-  m_smooth_audio(false)
+  m_cross_fade(false)
 {
   memset( m_buffer, 0, sizeof(m_buffer) );
+}
+
+int AUDIO_FREEZE_EFFECT::wrap_index_to_loop_section( int index ) const
+{
+  if( index >= m_loop_end )
+  {
+    return m_loop_start + ( index - m_loop_end );
+  }
+  else if( index < m_loop_start )
+  {
+    return m_loop_end - ( m_loop_start - index ) + 1;
+  }
+  else
+  {
+    return index;
+  }
 }
 
 int16_t AUDIO_FREEZE_EFFECT::read_sample( int index ) const
 {
   const int16_t* sample_buffer    = reinterpret_cast<const int16_t*>(m_buffer);
 
-  if( m_smooth_audio )
+  const int16_t sample = sample_buffer[ index ];
+
+  if( m_cross_fade )
   {
-    float smoothed_sample( 0.0f );
-    int start_index = index - ( FILTER_SIZE / 2 );
-    if( start_index < m_loop_start )
+    const int CROSS_FADE_SAMPLES( 4400 ); // 100ms
+    const int dist_to_loop_start = index - m_loop_start;
+    if( dist_to_loop_start < CROSS_FADE_SAMPLES )
     {
-      start_index = m_loop_end - ( m_loop_start - start_index );
-    }
-    
-    for( int x = 0; x < FILTER_SIZE; ++x )
-    {
-      int i = start_index + x;
-      if( i >= m_loop_end )
-      {
-        i = m_loop_start;
-      }
-
-
-#ifdef DEBUG_OUTPUT
-      Serial.print("loop start:");
-      Serial.print(m_loop_start);
-      Serial.print(" loop end:");
-      Serial.print(m_loop_end);
-      Serial.print(" i:");
-      Serial.print(i);
-      Serial.print("\n");
-#endif // DEBUG_OUTPUT
-
-      float s = sample_buffer[ i ];
-      smoothed_sample += gaussian_filter[x] * s;
+      float r = dist_to_loop_start / static_cast<float>(CROSS_FADE_SAMPLES); // ratio through cross fade
+      int16_t prev_sample_index = wrap_index_to_loop_section( index - CROSS_FADE_SAMPLES );
+      int16_t prev_sample = sample_buffer[ prev_sample_index ];
+      return lerp( prev_sample, sample, r );
     }
 
-    return roundf( smoothed_sample );
+    const int dist_to_loop_end = m_loop_end - index;
+    if( dist_to_loop_end < CROSS_FADE_SAMPLES )
+    {
+      float r = dist_to_loop_end / static_cast<float>(CROSS_FADE_SAMPLES); // ratio through cross fade
+      int16_t next_sample_index = wrap_index_to_loop_section( index + CROSS_FADE_SAMPLES );
+      int16_t next_sample = sample_buffer[ next_sample_index ];
+      return lerp( sample, next_sample, r );     
+    }
+
+    // return unaltered sample
   }
-  else
-  {
-    return sample_buffer[ index ];
-  }
+
+  return sample;
 }
 
 void AUDIO_FREEZE_EFFECT::write_to_buffer( const int16_t* source, int size )
@@ -147,7 +150,7 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size, 
         if( m_head >= m_loop_end )
         {
           m_head                = m_loop_start;
-        }        
+        }
       }
     }
 }
@@ -195,7 +198,7 @@ void AUDIO_FREEZE_EFFECT::set_freeze( bool active )
 
 void AUDIO_FREEZE_EFFECT::set_length( float length )
 {
-  const int loop_length = max_val<float>( roundf( length * freeze_queue_size_in_samples( m_sample_size_in_bits ) ), FILTER_SIZE );
+  const int loop_length = roundf( length * freeze_queue_size_in_samples( m_sample_size_in_bits ) );
   m_loop_end            = m_loop_start + loop_length;
 }
 
@@ -235,9 +238,9 @@ void AUDIO_FREEZE_EFFECT::set_centre( float centre )
   }
 }
 
-void AUDIO_FREEZE_EFFECT::set_smooth_audio( bool smooth )
+void AUDIO_FREEZE_EFFECT::set_cross_fade( bool cross_fade )
 {
-  m_smooth_audio = smooth;
+  m_cross_fade = cross_fade;
 }
 
 
