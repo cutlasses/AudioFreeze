@@ -108,10 +108,13 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size )
 
         if( curr_index == next_index )
         {
+          // both current and next are in the same sample
           sample                = read_sample(curr_index);
         }
         else
         {
+          // crossing 2 samples - calculate how much of each sample to use, then lerp between them
+          // use the fractional part - if 0.3 'into' next sample, then we mix 0.3 of next and 0.7 of current
           double int_part;
           float rem             = m_reverse ? modf( m_head, &int_part ) : modf( next, &int_part );
           const float t         = rem / m_speed;      
@@ -133,7 +136,8 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size )
 
 float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
 {
-  // head will have limited movement in freeze mode - clamped between start and end
+  // advance the read head - clamped between start and end
+  // will read backwards when in reverse mode
   if( m_reverse )
   {
     float next_head( m_head );
