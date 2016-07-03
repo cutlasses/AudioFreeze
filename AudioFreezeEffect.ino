@@ -53,13 +53,48 @@ int AUDIO_FREEZE_EFFECT::wrap_index_to_loop_section( int index ) const
   }
 }
 
+void AUDIO_FREEZE_EFFECT::write_sample( int16_t sample, int index )
+{
+  switch( m_sample_size_in_bits )
+  {
+     case 8:
+    {
+      int8_t sample8                       = sample;
+      sample8                              >>= 8;
+      int8_t* sample_buffer                = reinterpret_cast<int8_t*>(m_buffer);
+      sample_buffer[ index ]               = sample;
+    }
+    case 16:
+    {
+      int16_t* sample_buffer                = reinterpret_cast<int16_t*>(m_buffer);
+      sample_buffer[ index ]                = sample;
+    }
+  }
+}
+
 int16_t AUDIO_FREEZE_EFFECT::read_sample( int index ) const
 {
-  const int16_t* sample_buffer    = reinterpret_cast<const int16_t*>(m_buffer);
+  switch( m_sample_size_in_bits )
+  {
+    case 8:
+    {
+        const int8_t* sample_buffer    = reinterpret_cast<const int8_t*>(m_buffer);
+        const int8_t sample            = sample_buffer[ index ];
 
-  const int16_t sample = sample_buffer[ index ];
+        int16_t sample16               = sample;
+        sample16 <<= 8;
 
-  return sample;
+        return sample16;
+    }
+    case 16:
+    {
+        const int16_t* sample_buffer    = reinterpret_cast<const int16_t*>(m_buffer);
+        const int16_t sample            = sample_buffer[ index ];
+        return sample;
+    }
+  }
+
+  return 0;
 }
 
 void AUDIO_FREEZE_EFFECT::write_to_buffer( const int16_t* source, int size )
@@ -68,9 +103,7 @@ void AUDIO_FREEZE_EFFECT::write_to_buffer( const int16_t* source, int size )
 
   for( int x = 0; x < size; ++x )
   {
-    // DO CONVERSION TO 8-bit HERE
-    int16_t* sample_buffer            = reinterpret_cast<int16_t*>(m_buffer);
-    sample_buffer[ trunc_to_int(m_head) ] = source[x];
+    write_sample( source[x], trunc_to_int(m_head) );
 
     if( trunc_to_int(++m_head) == fqs )
     {
@@ -252,4 +285,11 @@ void AUDIO_FREEZE_EFFECT::set_reverse( bool reverse )
   m_reverse = reverse;
 }
 
+void AUDIO_FREEZE_EFFECT::set_bit_depth( int sample_size_in_bits )
+{
+  m_sample_size_in_bits = sample_size_in_bits;
+  m_head                = 0.0f;
+
+  memset( m_buffer, 0, sizeof(m_buffer) );
+}
 
