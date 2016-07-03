@@ -99,13 +99,28 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size )
     {
       if( m_speed < 1.0f )
       {
-        int curr                = trunc_to_int( m_head );
-        int next                = next_head( m_speed );
+        float next              = next_head( m_speed );
 
-        int16_t sample          = lerp( read_sample(curr), read_sample(next), m_speed );
+        int curr_index          = truncf( m_head );
+        int next_index          = truncf( next );
+
+        int16_t sample( 0 );
+
+        if( curr_index == next_index )
+        {
+          sample                = read_sample(curr_index);
+        }
+        else
+        {
+          double int_part;
+          float rem             = m_reverse ? modf( m_head, &int_part ) : modf( next, &int_part );
+          const float t         = rem / m_speed;      
+          sample                = lerp( read_sample(curr_index), read_sample(next_index), t );          
+       }
+
         dest[x]                 = sample;
 
-        m_head                  = next_head( m_speed );
+        m_head                  = next;
       }
       else
       {
@@ -125,9 +140,8 @@ float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
     next_head               -= inc;
     if( next_head < m_loop_start )
     {
-      double int_part;
-      const float frac      = fabs( modf( next_head, &int_part ) );
-      next_head             = m_loop_end + frac;
+      const float rem       = m_loop_start - next_head;
+      next_head             = m_loop_end + rem;
     }
   
     return next_head;    
@@ -138,9 +152,8 @@ float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
     next_head               += inc;
     if( next_head >= m_loop_end )
     {
-      double int_part;
-      const float frac      = fabs( modf( next_head, &int_part ) );
-      next_head             = m_loop_start + frac;
+      const float rem       = next_head - m_loop_end;
+      next_head             = m_loop_start + rem;
     }
   
     return next_head;
