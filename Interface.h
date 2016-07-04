@@ -20,10 +20,13 @@ public:
 
 class BUTTON
 {
-  int           m_data_pin;
-  bool          m_is_toggle;
-  bool          m_prev_is_active;
-  bool          m_is_active;
+  int16_t       m_data_pin;
+  int16_t       m_is_toggle : 1;
+  int16_t       m_prev_is_active : 1;
+  int16_t       m_is_active : 1;
+  int16_t       m_down_time_valid : 1;
+  int32_t       m_down_time_stamp;
+  int32_t       m_down_time_curr;
 
   Bounce        m_bounce;
 
@@ -34,8 +37,10 @@ public:
   bool          active() const;
   bool          single_click() const;
 
+  int32_t       down_time_ms() const;
+
   void          setup();
-  void          update();
+  void          update( int32_t time_ms );
 };
 
 //////////////////////////////////////

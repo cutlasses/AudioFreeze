@@ -9,7 +9,9 @@ AUDIO_FREEZE_INTERFACE::AUDIO_FREEZE_INTERFACE() :
   m_freeze_button( FREEZE_BUTTON_PIN, FREEZE_BUTTON_IS_TOGGLE ),
   m_mode_button( MODE_BUTTON_PIN, false ),
   m_leds(),
-  m_current_mode( 0 )
+  m_current_mode( 0 ),
+  m_change_bit_depth_valid( true ),
+  m_reduced_bit_depth( false )
 {
   m_leds[0] = LED( LED_1_PIN );
   m_leds[1] = LED( LED_2_PIN );
@@ -30,45 +32,66 @@ void AUDIO_FREEZE_INTERFACE::setup()
 
 void AUDIO_FREEZE_INTERFACE::update()
 {
+  int32_t time_in_ms = millis();
+  
   m_length_dial.update() ;
   m_position_dial.update();
   m_speed_dial.update();
   m_mix_dial.update();
   
-  m_freeze_button.update();
-  m_mode_button.update();
+  m_freeze_button.update( time_in_ms );
+  m_mode_button.update( time_in_ms );
 
-  if( m_mode_button.single_click() )
+  if( m_mode_button.down_time_ms() > BIT_DEPTH_BUTTON_HOLD_TIME_MS && m_change_bit_depth_valid )
   {
-    m_current_mode = ( m_current_mode + 1 ) % 2; //NUM_LEDS;
+    m_reduced_bit_depth = !m_reduced_bit_depth;
+
+    // don't allow the mode to change until button is released
+    m_change_bit_depth_valid = false;
+
+#ifdef DEBUG_OUTPUT
+  Serial.print("CHANGE DEPTH\n");
+#endif // DEBUG_OUTPUT
   }
 
- #ifdef DEBUG_OUTPUT
-    if( m_freeze_button.active() )
-    {
-      //Serial.print("Freeze\n");
-    }
-    if( m_mode_button.single_click() )
-    {
-      Serial.print("Mode ");
-      Serial.print(m_current_mode);
-      Serial.print("\n");
-    }
-#endif
-
-  for( int x = 0; x < NUM_LEDS; ++x )
+  if( !m_change_bit_depth_valid && !m_mode_button.active() )
   {
+    // once the mode button has been released, we can change the mode again
+    m_change_bit_depth_valid = true;
+  }
+  
+  if( m_mode_button.single_click() )
+  {
+    m_current_mode = ( m_current_mode + 1 ) % NUM_MODES;
+  }
+
+  // update mode leds
+  for( int x = 0; x < NUM_LEDS - 1; ++x )
+  {
+    LED& led = m_leds[x];
     if( x == m_current_mode )
     {
-      m_leds[x].set_active( true );
+      led.set_active( true );
     }
     else
     {
-      m_leds[x].set_active( false );
+      led.set_active( false );
     }
 
-    m_leds[x].update();
+    led.update();
   }
+
+  // update bit depth led
+  LED& bit_depth_led = m_leds[ NUM_LEDS - 1 ];
+  if( m_reduced_bit_depth )
+  {
+    bit_depth_led.set_active( true );
+  }
+  else
+  {
+    bit_depth_led.set_active( false );
+  }
+  bit_depth_led.update();
 
 #ifdef DEBUG_OUTPUT
   /*
@@ -134,5 +157,10 @@ const BUTTON& AUDIO_FREEZE_INTERFACE::freeze_button() const
 int AUDIO_FREEZE_INTERFACE::mode() const
 {
   return m_current_mode;
+}
+
+bool AUDIO_FREEZE_INTERFACE::reduced_bit_depth() const
+{
+  return m_reduced_bit_depth;
 }
 

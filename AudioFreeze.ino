@@ -74,6 +74,15 @@ void loop()
     audio_freeze_effect.set_reverse( false );
   }
 
+  if( audio_freeze_interface.reduced_bit_depth() )
+  {
+    audio_freeze_effect.set_bit_depth( 8 );
+  }
+  else
+  {
+    audio_freeze_effect.set_bit_depth( 16 );
+  }
+
   if( audio_freeze_interface.freeze_button().active() )
   {
     const float freeze_mix_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );

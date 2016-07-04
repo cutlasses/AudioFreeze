@@ -59,7 +59,7 @@ void AUDIO_FREEZE_EFFECT::write_sample( int16_t sample, int index )
   {
      case 8:
     {
-      int8_t sample8                       = sample;
+      int16_t sample8                       = sample;
       sample8                              >>= 8;
       int8_t* sample_buffer                = reinterpret_cast<int8_t*>(m_buffer);
       sample_buffer[ index ]               = sample;
