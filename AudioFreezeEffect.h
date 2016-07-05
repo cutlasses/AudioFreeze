@@ -14,8 +14,8 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
 
   float                 m_speed;
 
-  int                   m_loop_start;
-  int                   m_loop_end;
+  int                   m_loop_start;   // index of the first sample to play in loop
+  int                   m_loop_end;     // index of the last sample to play in loop
 
   int                   m_sample_size_in_bits;
 
@@ -37,7 +37,7 @@ public:
 
   AUDIO_FREEZE_EFFECT();
 
-  virtual void update();
+  virtual void          update();
 
   bool                  is_freeze_active() const;
   void                  set_freeze( bool active );

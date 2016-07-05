@@ -34,11 +34,14 @@ AUDIO_FREEZE_INTERFACE   audio_freeze_interface;
 void setup()
 {
   Serial.begin(9600);
-  //AudioMemory(FREEZE_QUEUE_SIZE+8);
+
   AudioMemory(8);
   
   sgtl5000_1.enable();
-  sgtl5000_1.volume(0.95f);
+  sgtl5000_1.volume(0.8f);
+
+  sgtl5000_1.lineInLevel( 10 );  // 0.56volts p-p
+  sgtl5000_1.lineOutLevel( 13 );  // 3.16volts p-p
   
   SPI.setMOSI(7);
   SPI.setSCK(14);
@@ -74,15 +77,6 @@ void loop()
     audio_freeze_effect.set_reverse( false );
   }
 
-  if( audio_freeze_interface.reduced_bit_depth() )
-  {
-    audio_freeze_effect.set_bit_depth( 8 );
-  }
-  else
-  {
-    audio_freeze_effect.set_bit_depth( 16 );
-  }
-
   if( audio_freeze_interface.freeze_button().active() )
   {
     const float freeze_mix_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );
@@ -94,6 +88,16 @@ void loop()
   {
     audio_mixer.gain( MIX_FREEZE_CHANNEL, 0.0f );
     audio_mixer.gain( MIX_ORIGINAL_CHANNEL, 1.0f );
+
+    // only adjust bit-depth when freeze is not active, need to write the data in the new bit-depth before it can be played
+    if( audio_freeze_interface.reduced_bit_depth() )
+    {
+      audio_freeze_effect.set_bit_depth( 8 );
+    }
+    else
+    {
+      audio_freeze_effect.set_bit_depth( 16 );
+    }
   }
 }
 

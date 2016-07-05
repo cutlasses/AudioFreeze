@@ -39,13 +39,13 @@ AUDIO_FREEZE_EFFECT::AUDIO_FREEZE_EFFECT() :
 
 int AUDIO_FREEZE_EFFECT::wrap_index_to_loop_section( int index ) const
 {
-  if( index >= m_loop_end )
+  if( index > m_loop_end )
   {
-    return m_loop_start + ( index - m_loop_end );
+    return m_loop_start + ( index - m_loop_end ) - 1;
   }
   else if( index < m_loop_start )
   {
-    return m_loop_end - ( m_loop_start - index ) + 1;
+    return m_loop_end - ( m_loop_start - index ) - 1;
   }
   else
   {
@@ -55,14 +55,21 @@ int AUDIO_FREEZE_EFFECT::wrap_index_to_loop_section( int index ) const
 
 void AUDIO_FREEZE_EFFECT::write_sample( int16_t sample, int index )
 {
+  ASSERT_MSG( index >= 0 && index < freeze_queue_size_in_samples( m_sample_size_in_bits ), "AUDIO_FREEZE_EFFECT::write_sample() writing outside buffer" );
+  
   switch( m_sample_size_in_bits )
   {
      case 8:
     {
-      int16_t sample8                       = sample;
-      sample8                              >>= 8;
+      int8_t sample8                       = (sample >> 8) & 0xff;
       int8_t* sample_buffer                = reinterpret_cast<int8_t*>(m_buffer);
-      sample_buffer[ index ]               = sample;
+      sample_buffer[ index ]               = sample8;
+
+//      Serial.print("write_sample ");
+//      Serial.print(sample);
+//      Serial.print("->");
+//      Serial.print(sample8);     
+//      Serial.print("\n");
     }
     case 16:
     {
@@ -74,6 +81,8 @@ void AUDIO_FREEZE_EFFECT::write_sample( int16_t sample, int index )
 
 int16_t AUDIO_FREEZE_EFFECT::read_sample( int index ) const
 {
+  ASSERT_MSG( index >= 0 && index < freeze_queue_size_in_samples( m_sample_size_in_bits ), "AUDIO_FREEZE_EFFECT::read_sample() writing outside buffer" );
+ 
   switch( m_sample_size_in_bits )
   {
     case 8:
@@ -82,7 +91,7 @@ int16_t AUDIO_FREEZE_EFFECT::read_sample( int index ) const
         const int8_t sample            = sample_buffer[ index ];
 
         int16_t sample16               = sample;
-        sample16 <<= 8;
+        sample16                       <<= 8;
 
         return sample16;
     }
@@ -177,7 +186,7 @@ float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
     next_head               -= inc;
     if( next_head < m_loop_start )
     {
-      const float rem       = m_loop_start - next_head;
+      const float rem       = m_loop_start - next_head - 1.0f;
       next_head             = m_loop_end + rem;
     }
   
@@ -187,9 +196,9 @@ float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
   {
     float next_head( m_head );
     next_head               += inc;
-    if( next_head >= m_loop_end )
+    if( next_head > m_loop_end )
     {
-      const float rem       = next_head - m_loop_end;
+      const float rem       = next_head - m_loop_end - 1.0f;
       next_head             = m_loop_start + rem;
     }
   
@@ -240,8 +249,9 @@ void AUDIO_FREEZE_EFFECT::set_freeze( bool active )
 
 void AUDIO_FREEZE_EFFECT::set_length( float length )
 {
-  const int loop_length = roundf( length * freeze_queue_size_in_samples( m_sample_size_in_bits ) );
-  m_loop_end            = m_loop_start + loop_length;
+  const int max_size    = freeze_queue_size_in_samples( m_sample_size_in_bits );
+  const int loop_length = roundf( length * max_size );
+  m_loop_end            = min( m_loop_start + loop_length, max_size - 1 );
 }
 
 void AUDIO_FREEZE_EFFECT::set_speed( float speed )
@@ -278,6 +288,8 @@ void AUDIO_FREEZE_EFFECT::set_centre( float centre )
     m_loop_end      = fqs - 1;
     m_loop_start    = m_loop_end - loop_length;
   }
+
+  
 }
 
 void AUDIO_FREEZE_EFFECT::set_reverse( bool reverse )
@@ -287,9 +299,21 @@ void AUDIO_FREEZE_EFFECT::set_reverse( bool reverse )
 
 void AUDIO_FREEZE_EFFECT::set_bit_depth( int sample_size_in_bits )
 {
-  m_sample_size_in_bits = sample_size_in_bits;
-  m_head                = 0.0f;
+  if( sample_size_in_bits != m_sample_size_in_bits )
+  {
+    m_sample_size_in_bits = sample_size_in_bits;
+    m_head                = 0.0f;
 
-  memset( m_buffer, 0, sizeof(m_buffer) );
+    set_length( 1.0f );
+  
+    memset( m_buffer, 0, sizeof(m_buffer) );
+
+#ifdef DEBUG_OUTPUT
+    Serial.print( "set_bit_depth " );
+    Serial.print( sample_size_in_bits );
+    Serial.print( "buffer size " );
+    Serial.print( freeze_queue_size_in_samples( m_sample_size_in_bits ) );
+#endif
+  }
 }
 

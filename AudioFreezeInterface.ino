@@ -48,10 +48,6 @@ void AUDIO_FREEZE_INTERFACE::update()
 
     // don't allow the mode to change until button is released
     m_change_bit_depth_valid = false;
-
-#ifdef DEBUG_OUTPUT
-  Serial.print("CHANGE DEPTH\n");
-#endif // DEBUG_OUTPUT
   }
 
   if( !m_change_bit_depth_valid && !m_mode_button.active() )

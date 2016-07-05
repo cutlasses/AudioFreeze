@@ -1,3 +1,22 @@
+#pragma once
+
+#include "CompileSwitches.h"
+
+#ifdef DEBUG_OUTPUT
+
+bool _assert_fail(const char* msg )
+{
+  Serial.print(msg);
+  Serial.print("\n");
+
+  return true;
+}
+
+#define ASSERT_MSG(x, msg) ((void)((x) || (_assert_fail(msg))))
+#else
+#define ASSERT_MSG(x, msg)
+#endif
+
 template <typename T>
 T clamp( const T& value, const T& min, const T& max )
 {
