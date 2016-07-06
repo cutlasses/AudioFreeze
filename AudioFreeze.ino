@@ -49,14 +49,14 @@ void setup()
   audio_freeze_interface.setup();
 
   delay(1000);
-
+  
 #ifdef DEBUG_OUTPUT
   Serial.print("Setup finished\n");
 #endif // DEBUG_OUTPUT
 }
 
 void loop()
-{
+{  
   audio_freeze_interface.update();
 
   if( audio_freeze_interface.freeze_button().active() != audio_freeze_effect.is_freeze_active() )

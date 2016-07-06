@@ -4,15 +4,17 @@
 
 #ifdef DEBUG_OUTPUT
 
-bool _assert_fail(const char* msg )
+bool _assert_fail( const char* assert, const char* msg )
 {
+  Serial.print(assert);
+  Serial.print(" ");
   Serial.print(msg);
   Serial.print("\n");
 
   return true;
 }
 
-#define ASSERT_MSG(x, msg) ((void)((x) || (_assert_fail(msg))))
+#define ASSERT_MSG(x, msg) ((void)((x) || (_assert_fail(#x,msg))))
 #else
 #define ASSERT_MSG(x, msg)
 #endif
