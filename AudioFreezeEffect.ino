@@ -148,6 +148,9 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size )
         int curr_index          = truncf( m_head );
         int next_index          = truncf( next );
 
+        ASSERT_MSG( curr_index >= 0 && curr_index < freeze_queue_size_in_samples( m_sample_size_in_bits ), "AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed()" );
+        ASSERT_MSG( next_index >= 0 && next_index < freeze_queue_size_in_samples( m_sample_size_in_bits ), "AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed()" );
+
         int16_t sample( 0 );
 
         if( curr_index == next_index )
@@ -182,6 +185,9 @@ float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
 {
   // advance the read head - clamped between start and end
   // will read backwards when in reverse mode
+
+  inc = min( inc, m_loop_end - m_loop_start ); // clamp the increment to the loop length
+  
   if( m_reverse )
   {
     float next_head( m_head );
@@ -191,7 +197,8 @@ float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
       const float rem       = m_loop_start - next_head - 1.0f;
       next_head             = m_loop_end + rem;
     }
-  
+
+    ASSERT_MSG( truncf(next_head) >= 0 && truncf(next_head) < freeze_queue_size_in_samples( m_sample_size_in_bits ), "AUDIO_FREEZE_EFFECT::next_head()" );
     return next_head;    
   }
   else
@@ -203,7 +210,26 @@ float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
       const float rem       = next_head - m_loop_end - 1.0f;
       next_head             = m_loop_start + rem;
     }
-  
+
+    ASSERT_MSG( truncf(next_head) >= 0 && truncf(next_head) < freeze_queue_size_in_samples( m_sample_size_in_bits ), "AUDIO_FREEZE_EFFECT::next_head()" );
+
+#ifdef DEBUG_OUTPUT
+    if( truncf(next_head) < 0 && truncf(next_head) >= freeze_queue_size_in_samples( m_sample_size_in_bits ) )
+    {
+      Serial.print("next_head ");
+      Serial.print(next_head);
+      Serial.print(" rem  ");
+      Serial.print(next_head - m_loop_end - 1.0f);
+      Serial.print( " loop start ");
+      Serial.print(m_loop_start);
+      Serial.print( " loop end ");
+      Serial.print(m_loop_end);
+      Serial.print( " inc ");
+      Serial.print(inc);
+      Serial.print( "\n");          
+    }
+#endif
+    
     return next_head;
   }
 }
@@ -255,9 +281,14 @@ void AUDIO_FREEZE_EFFECT::set_freeze( bool active )
 
 void AUDIO_FREEZE_EFFECT::set_length( float length )
 {
+  ASSERT_MSG( length >= 0 && length < 1.0f, "AUDIO_FREEZE_EFFECT::set_length()" );
+
   const int max_size    = freeze_queue_size_in_samples( m_sample_size_in_bits );
   const int loop_length = roundf( length * max_size );
   m_loop_end            = min( m_loop_start + loop_length, max_size - 1 );
+
+  ASSERT_MSG( m_loop_start >= 0 && m_loop_start < freeze_queue_size_in_samples( m_sample_size_in_bits ), "AUDIO_FREEZE_EFFECT::set_length()" );
+  ASSERT_MSG( m_loop_end >= 0 && m_loop_end < freeze_queue_size_in_samples( m_sample_size_in_bits ), "AUDIO_FREEZE_EFFECT::set_length()" );
 }
 
 void AUDIO_FREEZE_EFFECT::set_speed( float speed )
@@ -278,6 +309,8 @@ void AUDIO_FREEZE_EFFECT::set_speed( float speed )
 
 void AUDIO_FREEZE_EFFECT::set_centre( float centre )
 {
+  ASSERT_MSG( centre >= 0 && centre < 1.0f, "AUDIO_FREEZE_EFFECT::set_centre()" );
+  
   const int fqs     = freeze_queue_size_in_samples( m_sample_size_in_bits );
   int centre_index  = roundf( centre * fqs );
 
@@ -294,6 +327,9 @@ void AUDIO_FREEZE_EFFECT::set_centre( float centre )
     m_loop_end      = fqs - 1;
     m_loop_start    = m_loop_end - loop_length;
   }
+
+  ASSERT_MSG( m_loop_start >= 0 && m_loop_start < freeze_queue_size_in_samples( m_sample_size_in_bits ), "AUDIO_FREEZE_EFFECT::set_centre()" );
+  ASSERT_MSG( m_loop_end >= 0 && m_loop_end < freeze_queue_size_in_samples( m_sample_size_in_bits ), "AUDIO_FREEZE_EFFECT::set_centre()" );
 }
 
 void AUDIO_FREEZE_EFFECT::set_reverse( bool reverse )
