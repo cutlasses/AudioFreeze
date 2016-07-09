@@ -99,6 +99,16 @@ void loop()
       audio_freeze_effect.set_bit_depth( 16 );
     }
   }
+
+#ifdef DEBUG_OUTPUT
+//  const int processor_usage = AudioProcessorUsage();
+//  if( processor_usage > 30 )
+//  {
+//    Serial.print( "Performance spike: " );
+//    Serial.print( processor_usage );
+//    Serial.print( "\n" );
+//  }
+#endif
 }
 
 
