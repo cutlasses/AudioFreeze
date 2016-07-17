@@ -9,7 +9,7 @@ AudioFreeze is a Eurorack module which uses a Teensy board, and the Teensy audio
 alt="AudioFreeze Eurorack module" width="240" height="180" border="10" /></a>
 
 ## Disclaimer
-This module should be seen as a prototype. IT HAS NO POWER FILTERING OR SHORT CIRCUIT PREVENTION, if you plug the ribbon cable in the wrong way you may damage the board and potentially your other modules. As this was my first PCB I wanted to make it as simple as possible. I'm merely making it available as a resource for people who want to make their own boards. If you do build your own I'd love to see it. Please tweet me @scolar any pictures of videos!
+This module should be seen as a prototype. IT HAS NO POWER FILTERING OR SHORT CIRCUIT PREVENTION, if you plug the ribbon cable in the wrong way you may damage the board and potentially your other modules. As this was my first PCB I wanted to make it as simple as possible. I'm merely making it available as a resource for people who want to make their own boards. If you do build your own I'd love to see it. Please tweet me @scolar any pictures or videos!
 
 ## BOM
 
