@@ -8,6 +8,9 @@ AudioFreeze is an Open Source Eurorack module which uses a Teensy board, and the
 " target="_blank"><img src="http://img.youtube.com/vi/Is2dHl0MkUs/0.jpg" 
 alt="AudioFreeze Eurorack module" width="240" height="180" border="10" /></a>
 
+## Disclaimer
+This module should be seen as a prototype. IT HAS NO POWER FILTERING OR SHORT CIRCUIT PREVENTION, if you plug the ribbon cable in the wrong way you may damage the board and potentially your other modules. As this was my first PCB I wanted to make it as simple as possible. I'm merely making it available as a resource for people who want to make their own boards.
+
 ## BOM
 
 * 1 AudioFreeze PCB using the attached Gerber files
