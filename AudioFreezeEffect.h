@@ -22,6 +22,9 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
 
   bool                  m_freeze_active;
   bool                  m_reverse;
+  
+  bool                  m_one_shot;     // play the section once rather than loop
+  bool                  m_paused;
 
   // store 'next' values, otherwise interrupt could be called during calculation of values
   float                 m_next_sample_size_in_bits;
@@ -40,7 +43,7 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
   void                  read_from_buffer( int16_t* dest, int size );
   void                  read_from_buffer_with_speed( int16_t* dest, int size );
   
-  float                 next_head( float inc ) const;
+  void                  advance_head( float inc );
 
   void                  set_bit_depth_impl( int sample_size_in_bits );
   void                  set_length_impl( float length );

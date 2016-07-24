@@ -34,6 +34,8 @@ AUDIO_FREEZE_EFFECT::AUDIO_FREEZE_EFFECT() :
   m_buffer_size_in_samples( freeze_queue_size_in_samples( 16 ) ),
   m_freeze_active(false),
   m_reverse(false),
+  m_one_shot( false ),
+  m_paused( false ),
   m_next_sample_size_in_bits(16),
   m_next_length(1.0f),
   m_next_centre(0.5f),
@@ -146,10 +148,10 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size )
     {
       if( m_speed < 1.0f )
       {
-        float next              = next_head( m_speed );
-
+        float prev_head         = m_head;
         int curr_index          = truncf( m_head );
-        int next_index          = truncf( next );
+        advance_head( m_speed );
+        int next_index          = truncf( m_head );
 
         ASSERT_MSG( curr_index >= 0 && curr_index < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed()" );
         ASSERT_MSG( next_index >= 0 && next_index < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed()" );
@@ -166,28 +168,28 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size )
           // crossing 2 samples - calculate how much of each sample to use, then lerp between them
           // use the fractional part - if 0.3 'into' next sample, then we mix 0.3 of next and 0.7 of current
           double int_part;
-          float rem             = m_reverse ? modf( m_head, &int_part ) : modf( next, &int_part );
+          float rem             = m_reverse ? modf( prev_head, &int_part ) : modf( m_head, &int_part );
           const float t         = rem / m_speed;      
           sample                = lerp( read_sample(curr_index), read_sample(next_index), t );          
        }
 
         dest[x]                 = sample;
-
-        m_head                  = next;
       }
       else
       {
         dest[x]                 = read_sample( trunc_to_int(m_head) );
         
-        m_head                  = next_head( m_speed );
+        advance_head( m_speed );
       }
     }
 }
 
-float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
+void AUDIO_FREEZE_EFFECT::advance_head( float inc )
 {
   // advance the read head - clamped between start and end
   // will read backwards when in reverse mode
+
+  bool end_reached    = false;
 
   if( m_loop_start == m_loop_end )
   {
@@ -195,57 +197,61 @@ float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
 #ifdef DEBUG_OUTPUT
     Serial.print("loop length is 1");
 #endif
-    return m_loop_start;
-  }
-
-  ASSERT_MSG( truncf(m_head) >= 0 && truncf(m_head) < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::next_head()" );
-
-  inc = min( inc, m_loop_end - m_loop_start - 1 ); // clamp the increment to the loop length
-  //ASSERT_MSG( inc > 0 && inc < m_loop_end - m_loop_start, "Invalid inc AUDIO_FREEZE_EFFECT::next_head()" );
-  
-  if( m_reverse )
-  {
-    float next_head( m_head );
-    next_head               -= inc;
-    if( next_head < m_loop_start )
-    {
-      const float rem       = m_loop_start - next_head - 1.0f;
-      next_head             = m_loop_end - rem;
-    }
-
-    ASSERT_MSG( truncf(next_head) >= 0 && truncf(next_head) < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::next_head()" );
-    return next_head;    
+    m_head      = m_loop_start;   
+    end_reached = true;
   }
   else
   {
-    float next_head( m_head );
-    next_head               += inc;
-    if( next_head > m_loop_end )
-    {
-      const float rem       = next_head - m_loop_end - 1.0f;
-      next_head             = m_loop_start + rem;
-    }
-
-    ASSERT_MSG( truncf(next_head) >= 0 && truncf(next_head) < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::next_head()" );
-
-#ifdef DEBUG_OUTPUT
-    if( truncf(next_head) < 0 || truncf(next_head) >= m_buffer_size_in_samples )
-    {
-      Serial.print("next_head ");
-      Serial.print(next_head);
-      Serial.print(" rem  ");
-      Serial.print(next_head - m_loop_end - 1.0f);
-      Serial.print( " loop start ");
-      Serial.print(m_loop_start);
-      Serial.print( " loop end ");
-      Serial.print(m_loop_end);
-      Serial.print( " inc ");
-      Serial.print(inc);
-      Serial.print( "\n");          
-    }
-#endif
+    ASSERT_MSG( truncf(m_head) >= 0 && truncf(m_head) < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::next_head()" );
+  
+    inc = min( inc, m_loop_end - m_loop_start - 1 ); // clamp the increment to the loop length
+    //ASSERT_MSG( inc > 0 && inc < m_loop_end - m_loop_start, "Invalid inc AUDIO_FREEZE_EFFECT::next_head()" );
     
-    return next_head;
+    if( m_reverse )
+    {
+      m_head               -= inc;
+      if( m_head < m_loop_start )
+      {
+        const float rem       = m_loop_start - m_head - 1.0f;
+        m_head                = m_loop_end - rem;
+      }
+  
+      ASSERT_MSG( truncf(m_head) >= 0 && truncf(m_head) < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::next_head()" );
+    }
+    else
+    {
+      m_head                += inc;
+      if( m_head > m_loop_end )
+      {
+        const float rem     = m_head - m_loop_end - 1.0f;
+        m_head              = m_loop_start + rem;
+        end_reached         = true;
+      }
+  
+      ASSERT_MSG( truncf(m_head) >= 0 && truncf(m_head) < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::next_head()" );
+  
+#ifdef DEBUG_OUTPUT
+      if( truncf(m_head) < 0 || truncf(m_head) >= m_buffer_size_in_samples )
+      {
+        Serial.print("next_head ");
+        Serial.print(m_head);
+        Serial.print(" rem  ");
+        Serial.print(m_head - m_loop_end - 1.0f);
+        Serial.print( " loop start ");
+        Serial.print(m_loop_start);
+        Serial.print( " loop end ");
+        Serial.print(m_loop_end);
+        Serial.print( " inc ");
+        Serial.print(inc);
+        Serial.print( "\n");          
+      }
+#endif
+    }
+  }
+
+  if( end_reached && m_one_shot )
+  {
+    m_paused = true;
   }
 }
 
@@ -261,17 +267,20 @@ void AUDIO_FREEZE_EFFECT::update()
   ASSERT_MSG( m_loop_end >= 0 && m_loop_end < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::update()" );
   
   if( m_freeze_active )
-  {    
-    audio_block_t* block        = allocate();
-
-    if( block != nullptr )
-    {
-      //read_from_buffer( block->data, AUDIO_BLOCK_SAMPLES );
-      read_from_buffer_with_speed( block->data, AUDIO_BLOCK_SAMPLES );
+  {
+    if( !m_paused )
+    {    
+      audio_block_t* block        = allocate();
   
-      transmit( block, 0 );
+      if( block != nullptr )
+      {
+        //read_from_buffer( block->data, AUDIO_BLOCK_SAMPLES );
+        read_from_buffer_with_speed( block->data, AUDIO_BLOCK_SAMPLES );
     
-      release( block );    
+        transmit( block, 0 );
+      
+        release( block );    
+      }
     }
   }
   else
