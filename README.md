@@ -1,6 +1,6 @@
 # AudioFreeze Teensy based Eurorack module
 ## What is AudioFreeze?
-AudioFreeze is a Eurorack module which uses a Teensy board, and the Teensy audio shield. It allows you to 'freeze' a section of incoming audio and manipulate it with the pots. There is a potentiometer on the rear of the board to attenuate input voltage.
+AudioFreeze is a Eurorack module which uses a Teensy board, and the Teensy audio shield. It allows you to 'freeze' a section of incoming audio and manipulate it with the pots. There is a potentiometer on the rear of the board to attenuate input voltage. See www.cutlasses.co.uk for more build info.
 
 [See here for a video which demonstrates the AudioFreeze in action](https://www.youtube.com/watch?v=Is2dHl0MkUs)
 
@@ -14,7 +14,7 @@ This module should be seen as a prototype. IT HAS NO POWER FILTERING OR SHORT CI
 ## BOM
 
 * 1 AudioFreeze PCB using the attached Gerber files
-* 1 Teensy board
+* 1 Teensy 3.2 dev board
 * 1 teensy Audio Shield
 * Various 2.54mm header, depending on how you want to attach Teensy to the PCB, long leg header useful
 * 4 50k linear Alpha 9mm vertical pots [From Thonk](https://www.thonk.co.uk/shop/alpha-9mm-pots/)
