@@ -11,6 +11,8 @@
 const float MIN_SPEED( 0.25f );
 const float MAX_SPEED( 4.0f );
 
+constexpr int CROSS_FADE_SAMPLES( ( AUDIO_SAMPLE_RATE / 1000.0f ) * 4 ); // 4ms cross fade
+
 
 /////////////////////////////////////////////////////////////////////
 
@@ -34,6 +36,7 @@ AUDIO_FREEZE_EFFECT::AUDIO_FREEZE_EFFECT() :
   m_buffer_size_in_samples( freeze_queue_size_in_samples( 16 ) ),
   m_freeze_active(false),
   m_reverse(false),
+  m_cross_fade(false),
   m_next_sample_size_in_bits(16),
   m_next_length(1.0f),
   m_next_centre(0.5f),
@@ -138,6 +141,30 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer( int16_t* dest, int size )
   }
 }
 
+int16_t AUDIO_FREEZE_EFFECT::read_sub_sample( float next ) const
+{
+  int curr_index          = truncf( m_head );
+  int next_index          = truncf( next );
+
+  ASSERT_MSG( curr_index >= 0 && curr_index < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed()" );
+  ASSERT_MSG( next_index >= 0 && next_index < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed()" );
+
+  if( curr_index == next_index )
+  {
+    // both current and next are in the same sample
+    return read_sample(curr_index);
+  }
+  else
+  {
+    // crossing 2 samples - calculate how much of each sample to use, then lerp between them
+    // use the fractional part - if 0.3 'into' next sample, then we mix 0.3 of next and 0.7 of current
+    double int_part;
+    float rem             = m_reverse ? modf( m_head, &int_part ) : modf( next, &int_part );
+    const float t         = rem / m_speed;      
+    return lerp( read_sample(curr_index), read_sample(next_index), t );          
+  }
+}
+
 void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size )
 {          
     ASSERT_MSG( trunc_to_int(m_head) >= 0 && trunc_to_int(m_head) < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed()" );
@@ -148,30 +175,7 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size )
       {
         float next              = next_head( m_speed );
 
-        int curr_index          = truncf( m_head );
-        int next_index          = truncf( next );
-
-        ASSERT_MSG( curr_index >= 0 && curr_index < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed()" );
-        ASSERT_MSG( next_index >= 0 && next_index < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed()" );
-
-        int16_t sample( 0 );
-
-        if( curr_index == next_index )
-        {
-          // both current and next are in the same sample
-          sample                = read_sample(curr_index);
-        }
-        else
-        {
-          // crossing 2 samples - calculate how much of each sample to use, then lerp between them
-          // use the fractional part - if 0.3 'into' next sample, then we mix 0.3 of next and 0.7 of current
-          double int_part;
-          float rem             = m_reverse ? modf( m_head, &int_part ) : modf( next, &int_part );
-          const float t         = rem / m_speed;      
-          sample                = lerp( read_sample(curr_index), read_sample(next_index), t );          
-       }
-
-        dest[x]                 = sample;
+        dest[x]                 = read_sub_sample( next );
 
         m_head                  = next;
       }
@@ -182,6 +186,48 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed( int16_t* dest, int size )
         m_head                  = next_head( m_speed );
       }
     }
+}
+
+void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed_and_cross_fade( int16_t* dest, int size )
+{
+    ASSERT_MSG( trunc_to_int(m_head) >= 0 && trunc_to_int(m_head) < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed()" );
+
+    const int cross_fade_start  = m_loop_end - CROSS_FADE_SAMPLES;
+
+    for( int x = 0; x < size; ++x )
+    {
+      const int headi           = trunc_to_int(m_head);
+
+      int16_t sample( 0 );
+      if( m_speed < 1.0f )
+      {
+        float next              = next_head( m_speed );
+
+        sample                  = read_sub_sample( next );
+
+        m_head                  = next;
+      }
+      else
+      {
+        sample                  = read_sample( headi );
+        
+        m_head                  = next_head( m_speed );
+      }
+
+      if( headi >= cross_fade_start )
+      {
+        const int cf_offset     = cross_fade_start - m_loop_start;
+        const float cf_head     = m_head - cf_offset;
+        const float cf_t        = ( headi / cross_fade_start ) / static_cast<float>(CROSS_FADE_SAMPLES);
+        const int16_t cf_sample = m_speed < 1.0f ? read_sub_sample( cf_head ) : read_sample( cf_head );
+
+        dest[x]                 = lerp( cf_sample, sample, cf_t );
+      }
+      else
+      {
+        dest[x]                 = sample;
+      }
+    }  
 }
 
 float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
@@ -266,8 +312,14 @@ void AUDIO_FREEZE_EFFECT::update()
 
     if( block != nullptr )
     {
-      //read_from_buffer( block->data, AUDIO_BLOCK_SAMPLES );
-      read_from_buffer_with_speed( block->data, AUDIO_BLOCK_SAMPLES );
+      if( m_cross_fade )
+      {
+        read_from_buffer_with_speed_and_cross_fade( block->data, AUDIO_BLOCK_SAMPLES );   
+      }
+      else
+      {
+        read_from_buffer_with_speed( block->data, AUDIO_BLOCK_SAMPLES );
+      }
   
       transmit( block, 0 );
     
@@ -419,6 +471,11 @@ void AUDIO_FREEZE_EFFECT::set_freeze( bool active )
 void AUDIO_FREEZE_EFFECT::set_reverse( bool reverse )
 {
   m_reverse = reverse;
+}
+
+void AUDIO_FREEZE_EFFECT::set_cross_fade( bool cross_fade )
+{
+  m_cross_fade = cross_fade;
 }
 
 void AUDIO_FREEZE_EFFECT::set_length( float length )

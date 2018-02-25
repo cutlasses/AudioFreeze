@@ -22,6 +22,7 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
 
   bool                  m_freeze_active;
   bool                  m_reverse;
+  bool                  m_cross_fade;
 
   // store 'next' values, otherwise interrupt could be called during calculation of values
   float                 m_next_sample_size_in_bits;
@@ -38,7 +39,9 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
   
   void                  write_to_buffer( const int16_t* source, int size );
   void                  read_from_buffer( int16_t* dest, int size );
+  int16_t               read_sub_sample( float next ) const;
   void                  read_from_buffer_with_speed( int16_t* dest, int size );
+  void                  read_from_buffer_with_speed_and_cross_fade( int16_t* dest, int size );
   
   float                 next_head( float inc ) const;
 
@@ -61,6 +64,7 @@ public:
   void                  set_centre( float centre );
   void                  set_speed( float speed );
   void                  set_reverse( bool reverse );
+  void                  set_cross_fade( bool cross_fade );
   void                  set_bit_depth( int sample_size_in_bits );
 };
 
