@@ -11,6 +11,8 @@
 const float MIN_SPEED( 0.25f );
 const float MAX_SPEED( 4.0f );
 
+const float MIN_LFO_PERIOD( 1.0f );
+const float MAX_LFO_PERIOD( 8.0f );
 constexpr int CROSS_FADE_SAMPLES( ( AUDIO_SAMPLE_RATE / 1000.0f ) * 4 ); // 4ms cross fade
 
 
@@ -20,6 +22,44 @@ int freeze_queue_size_in_samples( int sample_size_in_bits )
 {
   const int bytes_per_sample = sample_size_in_bits / 8;
   return FREEZE_QUEUE_SIZE_IN_BYTES / bytes_per_sample;
+}
+
+/////////////////////////////////////////////////////////////////////
+
+RANDOM_LFO::RANDOM_LFO( float min_period, float max_period ) :
+  m_min_period( min_period ),
+  m_max_period( max_period ),
+  m_p_ratio( 0.0f ),
+  m_time( 0.0f ),
+  m_prev_value( 0.0f )
+{
+  choose_next_period();
+}
+
+void RANDOM_LFO::set_period( float seconds )
+{
+  m_p_ratio = ( 2.0f * M_PI ) / seconds;
+}
+
+void RANDOM_LFO::choose_next_period()
+{
+  set_period( random_ranged( m_min_period, m_max_period ) );
+}
+
+float RANDOM_LFO::next( float time_inc )
+{
+  m_time += time_inc;
+  
+  const float next_value = sin( m_time * m_p_ratio );
+  
+  if( (m_prev_value > 0.0f) != (next_value > 0.0f) )
+  {
+    // recalculate the period on the zero crossing
+    choose_next_period();
+  }
+  
+  m_prev_value = next_value;
+  return next_value;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -40,7 +80,8 @@ AUDIO_FREEZE_EFFECT::AUDIO_FREEZE_EFFECT() :
   m_next_sample_size_in_bits(16),
   m_next_length(1.0f),
   m_next_centre(0.5f),
-  m_next_speed(1.0f)
+  m_next_speed(1.0f),
+  m_lfo( MIN_LFO_PERIOD, MAX_LFO_PERIOD )
 {
   memset( m_buffer, 0, sizeof(m_buffer) );
 }
@@ -216,9 +257,9 @@ void AUDIO_FREEZE_EFFECT::read_from_buffer_with_speed_and_cross_fade( int16_t* d
 
       if( headi >= cross_fade_start )
       {
-        const int cf_offset     = cross_fade_start - m_loop_start;
+        const int cf_offset     = cross_fade_start - m_loop_start - CROSS_FADE_SAMPLES; // cross fade start before the loop starts and fades in
         const float cf_head     = m_head - cf_offset;
-        const float cf_t        = ( headi / cross_fade_start ) / static_cast<float>(CROSS_FADE_SAMPLES);
+        const float cf_t        = ( headi - cross_fade_start ) / static_cast<float>(CROSS_FADE_SAMPLES);
         const int16_t cf_sample = m_speed < 1.0f ? read_sub_sample( cf_head ) : read_sample( cf_head );
 
         dest[x]                 = lerp( cf_sample, sample, cf_t );
@@ -246,7 +287,7 @@ float AUDIO_FREEZE_EFFECT::next_head( float inc ) const
 
   ASSERT_MSG( truncf(m_head) >= 0 && truncf(m_head) < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::next_head()" );
 
-  inc = min( inc, m_loop_end - m_loop_start - 1 ); // clamp the increment to the loop length
+  inc = min_val<float>( inc, m_loop_end - m_loop_start - 1 ); // clamp the increment to the loop length
   //ASSERT_MSG( inc > 0 && inc < m_loop_end - m_loop_start, "Invalid inc AUDIO_FREEZE_EFFECT::next_head()" );
   
   if( m_reverse )
@@ -305,6 +346,14 @@ void AUDIO_FREEZE_EFFECT::update()
   ASSERT_MSG( trunc_to_int(m_head) >= 0 && trunc_to_int(m_head) < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::update()" );
   ASSERT_MSG( m_loop_start >= 0 && m_loop_start < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::update()" );
   ASSERT_MSG( m_loop_end >= 0 && m_loop_end < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::update()" );
+
+  const float old_speed = m_speed;
+  
+  const float time_inc = AUDIO_BLOCK_SAMPLES * ( 1.0f / AUDIO_SAMPLE_RATE );
+  const float lfo = m_lfo.next( time_inc );
+  
+  constexpr float MAX_ADJ( ( 1.0f / 12.0f ) * 0.1f ); // 10 cents of a semitone
+  m_speed += lfo * MAX_ADJ;
   
   if( m_freeze_active )
   {    
@@ -339,6 +388,8 @@ void AUDIO_FREEZE_EFFECT::update()
       release( block );
     }
   }
+
+  m_speed = old_speed;
 }
 
 void AUDIO_FREEZE_EFFECT::set_bit_depth_impl( int sample_size_in_bits )
@@ -369,7 +420,7 @@ void AUDIO_FREEZE_EFFECT::set_length_impl( float length )
   ASSERT_MSG( length >= 0 && length <= 1.0f, "AUDIO_FREEZE_EFFECT::set_length_impl()" );
 
   const int loop_length = roundf( length * m_buffer_size_in_samples );
-  m_loop_end            = min( m_loop_start + loop_length, m_buffer_size_in_samples - 1 );
+  m_loop_end            = min_val( m_loop_start + loop_length, m_buffer_size_in_samples - 1 );
 
 #ifdef DEBUG_OUTPUT
   if( m_loop_end < m_loop_start || m_loop_start < 0 || m_loop_start > m_buffer_size_in_samples - 1 || m_loop_end < 0 || m_loop_end > m_buffer_size_in_samples - 1 )

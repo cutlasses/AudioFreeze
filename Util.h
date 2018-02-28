@@ -65,9 +65,15 @@ T lerp( const T& v1, const T& v2, float t )
   return v1 + ( (v2 - v1) * t );
 }
 
-int trunc_to_int( float v )
+inline int trunc_to_int( float v )
 {
   return static_cast<int>( trunc(v) );
+}
+
+inline float random_ranged( float min, float max )
+{
+  const float range = max - min;
+  return ( ( static_cast<float>( rand() ) / RAND_MAX ) * range ) + min;
 }
 
 
