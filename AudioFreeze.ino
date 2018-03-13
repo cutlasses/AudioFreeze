@@ -35,6 +35,8 @@ void setup()
 {
   Serial.begin(9600);
 
+  serial_port_initialised = true;
+
   AudioMemory(8);
   
   sgtl5000_1.enable();
@@ -48,11 +50,12 @@ void setup()
 
   audio_freeze_interface.setup();
 
+  audio_freeze_effect.set_wow_frequency_range( 1.25f, 3.85f );
+  audio_freeze_effect.set_flutter_frequency_range( 14.0f, 25.0f );
+
   delay(1000);
   
-#ifdef DEBUG_OUTPUT
-  Serial.print("Setup finished\n");
-#endif // DEBUG_OUTPUT
+  DEBUG_OUTPUT("Setup finished\n");
 }
 
 void loop()
@@ -62,11 +65,39 @@ void loop()
   if( audio_freeze_interface.freeze_button().active() != audio_freeze_effect.is_freeze_active() )
   {
     audio_freeze_effect.set_freeze( audio_freeze_interface.freeze_button().active() );
+
+    // no mix dial, so set mix directly
+    if( audio_freeze_interface.freeze_button().active() )
+    {
+      audio_mixer.gain( MIX_FREEZE_CHANNEL,1.0f );
+      audio_mixer.gain( MIX_ORIGINAL_CHANNEL, 0.0f );
+
+       // use the mix dial to control wow/flutter
+      const float wow_flutter_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );
+      
+      const float max_wow( 1.0f );
+      const float max_flutter( 0.4f );
+      audio_freeze_effect.set_wow_amount( wow_flutter_amount * max_wow ); 
+      audio_freeze_effect.set_flutter_amount( wow_flutter_amount * max_flutter ); 
+    }
+    else
+    {
+      audio_mixer.gain( MIX_FREEZE_CHANNEL,0.0f );
+      audio_mixer.gain( MIX_ORIGINAL_CHANNEL, 1.0f );
+    }
   }
 
-  audio_freeze_effect.set_length( audio_freeze_interface.length_dial().value() );
-  audio_freeze_effect.set_centre( audio_freeze_interface.position_dial().value() );
   audio_freeze_effect.set_speed( audio_freeze_interface.speed_dial().value() );
+
+  /*
+  if( audio_freeze_interface.freeze_button().active() != audio_freeze_effect.is_freeze_active() )
+  {
+    audio_freeze_effect.set_freeze( audio_freeze_interface.freeze_button().active() );
+  }
+
+  //audio_freeze_effect.set_length( audio_freeze_interface.length_dial().value() );
+  //audio_freeze_effect.set_centre( audio_freeze_interface.position_dial().value() );
+  //audio_freeze_effect.set_speed( audio_freeze_interface.speed_dial().value() );
 
   if( audio_freeze_interface.mode() == 1 )
   {
@@ -79,10 +110,18 @@ void loop()
 
   if( audio_freeze_interface.freeze_button().active() )
   {
-    const float freeze_mix_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );
+//    const float freeze_mix_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );
+//    
+//    audio_mixer.gain( MIX_FREEZE_CHANNEL, freeze_mix_amount );
+//    audio_mixer.gain( MIX_ORIGINAL_CHANNEL, 1.0f - freeze_mix_amount );
+
+    // use the mix dial to control wow/flutter
+    const float wow_flutter_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );
     
-    audio_mixer.gain( MIX_FREEZE_CHANNEL, freeze_mix_amount );
-    audio_mixer.gain( MIX_ORIGINAL_CHANNEL, 1.0f - freeze_mix_amount );
+    const float max_wow( 1.0f );
+    const float max_flutter( 0.4f );
+    audio_freeze_effect.set_wow_amount( wow_flutter_amount * max_wow ); 
+    audio_freeze_effect.set_wow_amount( wow_flutter_amount * max_flutter ); 
   }
   else
   {
@@ -99,15 +138,16 @@ void loop()
       audio_freeze_effect.set_bit_depth( 16 );
     }
   }
+  */
 
 #ifdef DEBUG_OUTPUT
-//  const int processor_usage = AudioProcessorUsage();
-//  if( processor_usage > 30 )
-//  {
-//    Serial.print( "Performance spike: " );
-//    Serial.print( processor_usage );
-//    Serial.print( "\n" );
-//  }
+  const int processor_usage = AudioProcessorUsage();
+  if( processor_usage > 30 )
+  {
+    Serial.print( "Performance spike: " );
+    Serial.print( processor_usage );
+    Serial.print( "\n" );
+  }
 #endif
 }
 
