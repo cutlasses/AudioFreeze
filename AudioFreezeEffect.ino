@@ -65,14 +65,7 @@ float RANDOM_LFO::next( float time_inc )
 	if( (m_prev_value > 0.0f) != (next_value > 0.0f) )
 	{
 		// recalculate the period on the zero crossing
-    DEBUG_TEXT("RECALC ");
-    DEBUG_TEXT(m_prev_value);
-    DEBUG_TEXT(" ");
-    DEBUG_TEXT(next_value);
-    DEBUG_TEXT("\n");
 		choose_next_frequency();
-
-    m_prev_value = sin( m_time * m_p_ratio );
 	}
  else
  {	
