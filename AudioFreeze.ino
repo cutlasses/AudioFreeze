@@ -71,14 +71,6 @@ void loop()
     {
       audio_mixer.gain( MIX_FREEZE_CHANNEL,1.0f );
       audio_mixer.gain( MIX_ORIGINAL_CHANNEL, 0.0f );
-
-       // use the mix dial to control wow/flutter
-      const float wow_flutter_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );
-      
-      const float max_wow( 1.0f );
-      const float max_flutter( 0.4f );
-      audio_freeze_effect.set_wow_amount( wow_flutter_amount * max_wow ); 
-      audio_freeze_effect.set_flutter_amount( wow_flutter_amount * max_flutter ); 
     }
     else
     {
@@ -86,8 +78,15 @@ void loop()
       audio_mixer.gain( MIX_ORIGINAL_CHANNEL, 1.0f );
     }
   }
+  
+   // use the mix dial to control wow/flutter
+  const float wow_flutter_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );
+  const float max_wow( 1.0f );
+  const float max_flutter( 0.4f );
+  audio_freeze_effect.set_wow_amount( wow_flutter_amount * max_wow ); 
+  audio_freeze_effect.set_flutter_amount( wow_flutter_amount * max_flutter ); 
 
-  audio_freeze_effect.set_speed( audio_freeze_interface.speed_dial().value() );
+  //audio_freeze_effect.set_speed( audio_freeze_interface.speed_dial().value() );
 
   /*
   if( audio_freeze_interface.freeze_button().active() != audio_freeze_effect.is_freeze_active() )

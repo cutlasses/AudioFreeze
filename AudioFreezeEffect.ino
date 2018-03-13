@@ -12,6 +12,12 @@
 const float MIN_SPEED( 0.25f );
 const float MAX_SPEED( 4.0f );
 
+constexpr float MIN_WOW_FREQ( 1.0f / 4.0f );
+constexpr float MAX_WOW_FREQ( 1.0f / 0.25f );
+constexpr float MIN_FLUTTER_FREQ( 1.0f / 0.03f );
+constexpr float MAX_FLUTTER_FREQ( 1.0f / 0.02f );
+
+
 constexpr int CROSS_FADE_SAMPLES( round_to_int(( AUDIO_SAMPLE_RATE / 1000.0f ) * 5) );
 
 
@@ -30,48 +36,54 @@ RANDOM_LFO::RANDOM_LFO( float min_frequency, float max_frequency ) :
   m_max_frequency( max_frequency ),
   m_p_ratio( 0.0f ),
   m_time( 0.0f ),
-  m_prev_value( 0.0f )
+  m_prev_value( 0.0f ),
+  m_num_cycles( 0 )
 {
-	choose_next_frequency();
+  choose_next_frequency();
 }
 
 void RANDOM_LFO::set_period( float seconds )
 {
-	m_p_ratio = ( 2.0f * M_PI ) / seconds;
+  m_p_ratio = ( 2.0f * M_PI ) / seconds;
 }
 
 void RANDOM_LFO::set_frequency( float hz )
 {
-	m_p_ratio = ( 2.0f * M_PI ) * hz;
+  m_p_ratio = ( 2.0f * M_PI ) * hz;
 }
 
 void RANDOM_LFO::choose_next_frequency()
 {
-	set_frequency( random_ranged( m_min_frequency, m_max_frequency ) );
+  set_frequency( random_ranged( m_min_frequency, m_max_frequency ) );
 }
 
 void RANDOM_LFO::set_frequency_range( float min_frequency, float max_frequency )
 {
-	m_min_frequency = min_frequency;
-	m_max_frequency = max_frequency;
+  m_min_frequency = min_frequency;
+  m_max_frequency = max_frequency;
 }
 
 float RANDOM_LFO::next( float time_inc )
 {
-	m_time += time_inc;
-	
-	const float next_value = sin( m_time * m_p_ratio );
-	
-	if( (m_prev_value > 0.0f) != (next_value > 0.0f) )
-	{
-		// recalculate the period on the zero crossing
-		choose_next_frequency();
-	}
- else
- {	
-	  m_prev_value = next_value;
-	  return next_value;
- }
+  const float next_value = sin( m_time * m_p_ratio );
+  
+  if( (m_prev_value >= 0.0f) != (next_value >= 0.0f) )
+  {
+    ++m_num_cycles;
+  }
+  
+  if( m_num_cycles >= 2 )
+  {
+    m_time      = 0.0f;
+    m_num_cycles  = 0;
+    choose_next_frequency();
+  }
+  
+  m_prev_value = next_value;
+    
+  m_time      += time_inc;
+  
+  return next_value;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -93,8 +105,8 @@ AUDIO_FREEZE_EFFECT::AUDIO_FREEZE_EFFECT() :
   m_next_centre(0.5f),
   m_next_speed(0.5f),
   m_next_freeze_active(false),
-  m_wow_lfo( 1.0f / 0.5f, 1.0f / 4.0f ),
-  m_flutter_lfo( 1.0f / 0.02f, 1.0f / 0.03f ),
+  m_wow_lfo( MIN_WOW_FREQ, MAX_WOW_FREQ ),
+  m_flutter_lfo( MIN_FLUTTER_FREQ, MAX_FLUTTER_FREQ ),
   m_wow_amount( 0.0f ),
   m_flutter_amount( 0.0f )
 {
@@ -434,16 +446,15 @@ void AUDIO_FREEZE_EFFECT::update()
   const float time_inc    = AUDIO_BLOCK_SAMPLES * ( 1.0f / AUDIO_SAMPLE_RATE );
   const float wow_lfo     = m_wow_lfo.next( time_inc );
   const float flutter_lfo = m_flutter_lfo.next( time_inc );
-
-  DEBUG_TEXT( wow_lfo );
-  DEBUG_TEXT( "\n" );
-	
 	
   constexpr float MAX_ADJ_WOW( ( 1.0f / 12.0f ) ); // 1 semitone
   constexpr float MAX_ADJ_FLUTTER( ( 1.0f / 12.0f ) ); // 1 semitone
   const float wow	      = ( wow_lfo * m_wow_amount )  * MAX_ADJ_WOW;
   const float flutter   = ( flutter_lfo * m_flutter_amount ) * MAX_ADJ_FLUTTER;
   m_speed				        += wow + flutter;
+
+  DEBUG_TEXT( m_speed );
+  DEBUG_TEXT( "\n" );
 	
   if( m_freeze_active )
   {        

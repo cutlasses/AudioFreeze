@@ -15,6 +15,8 @@ class RANDOM_LFO
 	float				m_time;
 	
 	float				m_prev_value;
+
+  int         m_num_cycles;
 	
 	void				choose_next_frequency();
 
