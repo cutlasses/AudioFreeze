@@ -433,7 +433,7 @@ void AUDIO_FREEZE_EFFECT::update()
 	
   const float time_inc    = AUDIO_BLOCK_SAMPLES * ( 1.0f / AUDIO_SAMPLE_RATE );
   const float wow_lfo     = m_wow_lfo.next( time_inc );
-  const float flutter_lfo = 0.0f; //m_flutter_lfo.next( time_inc );
+  const float flutter_lfo = m_flutter_lfo.next( time_inc );
 
   DEBUG_TEXT( wow_lfo );
   DEBUG_TEXT( "\n" );
