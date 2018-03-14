@@ -49,9 +49,6 @@ void RANDOM_LFO::set_period( float seconds )
 
 void RANDOM_LFO::set_frequency( float hz )
 {
-  DEBUG_TEXT("PERIOD ");
-  DEBUG_TEXT( (1.0f / hz) );
-  DEBUG_TEXT("\n");
   m_p_ratio = ( 2.0f * M_PI ) * hz;
 }
 
