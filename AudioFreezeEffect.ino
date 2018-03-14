@@ -57,11 +57,6 @@ void RANDOM_LFO::set_frequency( float hz )
 
 void RANDOM_LFO::choose_next_frequency()
 {
-  DEBUG_TEXT("CFN ");
-  DEBUG_TEXT( m_min_frequency );
-  DEBUG_TEXT(" ");
-  DEBUG_TEXT( m_max_frequency );
-  DEBUG_TEXT("\n");
   set_frequency( random_ranged( m_min_frequency, m_max_frequency ) );
 }
 
@@ -88,14 +83,6 @@ float RANDOM_LFO::next( float time_inc )
   }
   
   m_prev_value = next_value;
-
-  static float total_time = 0.0f;
-  DEBUG_TEXT("LFO ");
-  DEBUG_TEXT( total_time );
-  DEBUG_TEXT(" "); 
-  DEBUG_TEXT( next_value );
-  DEBUG_TEXT("\n"); 
-  total_time+= time_inc;
     
   m_time      += time_inc;
   
