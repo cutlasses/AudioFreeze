@@ -50,8 +50,8 @@ void setup()
 
   audio_freeze_interface.setup();
 
-  audio_freeze_effect.set_wow_frequency_range( 1.25f, 3.85f );
-  audio_freeze_effect.set_flutter_frequency_range( 14.0f, 25.0f );
+  //audio_freeze_effect.set_wow_frequency_range( 1.25f, 3.85f );
+  //audio_freeze_effect.set_flutter_frequency_range( 14.0f, 25.0f );
 
   delay(1000);
   
@@ -86,58 +86,9 @@ void loop()
   audio_freeze_effect.set_wow_amount( wow_flutter_amount * max_wow ); 
   audio_freeze_effect.set_flutter_amount( wow_flutter_amount * max_flutter ); 
 
-  //audio_freeze_effect.set_speed( audio_freeze_interface.speed_dial().value() );
-
-  /*
-  if( audio_freeze_interface.freeze_button().active() != audio_freeze_effect.is_freeze_active() )
-  {
-    audio_freeze_effect.set_freeze( audio_freeze_interface.freeze_button().active() );
-  }
-
-  //audio_freeze_effect.set_length( audio_freeze_interface.length_dial().value() );
-  //audio_freeze_effect.set_centre( audio_freeze_interface.position_dial().value() );
-  //audio_freeze_effect.set_speed( audio_freeze_interface.speed_dial().value() );
-
-  if( audio_freeze_interface.mode() == 1 )
-  {
-    audio_freeze_effect.set_reverse( true );
-  }
-  else
-  {
-    audio_freeze_effect.set_reverse( false );
-  }
-
-  if( audio_freeze_interface.freeze_button().active() )
-  {
-//    const float freeze_mix_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );
-//    
-//    audio_mixer.gain( MIX_FREEZE_CHANNEL, freeze_mix_amount );
-//    audio_mixer.gain( MIX_ORIGINAL_CHANNEL, 1.0f - freeze_mix_amount );
-
-    // use the mix dial to control wow/flutter
-    const float wow_flutter_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );
-    
-    const float max_wow( 1.0f );
-    const float max_flutter( 0.4f );
-    audio_freeze_effect.set_wow_amount( wow_flutter_amount * max_wow ); 
-    audio_freeze_effect.set_wow_amount( wow_flutter_amount * max_flutter ); 
-  }
-  else
-  {
-    audio_mixer.gain( MIX_FREEZE_CHANNEL, 0.0f );
-    audio_mixer.gain( MIX_ORIGINAL_CHANNEL, 1.0f );
-
-    // only adjust bit-depth when freeze is not active, need to write the data in the new bit-depth before it can be played
-    if( audio_freeze_interface.reduced_bit_depth() )
-    {
-      audio_freeze_effect.set_bit_depth( 8 );
-    }
-    else
-    {
-      audio_freeze_effect.set_bit_depth( 16 );
-    }
-  }
-  */
+  audio_freeze_effect.set_length( audio_freeze_interface.length_dial().value() );
+  audio_freeze_effect.set_centre( audio_freeze_interface.position_dial().value() );
+  audio_freeze_effect.set_speed( audio_freeze_interface.speed_dial().value() );
 
 #ifdef DEBUG_OUTPUT
   const int processor_usage = AudioProcessorUsage();

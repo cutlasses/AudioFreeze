@@ -79,6 +79,8 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
   int16_t               read_sample_cubic( float current ) const;
   void                  read_from_buffer_with_speed( int16_t* dest, int size );
   void                  read_from_buffer_with_speed_and_cross_fade( int16_t* dest, int size );
+
+  bool                  in_cross_fade() const;
   
   float                 next_head( float inc ) const;
 
