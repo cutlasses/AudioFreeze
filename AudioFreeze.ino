@@ -97,7 +97,7 @@ void loop()
 
   audio_freeze_effect.set_length( audio_freeze_interface.length_dial().value() );
   audio_freeze_effect.set_centre( audio_freeze_interface.position_dial().value() );
-  audio_freeze_effect.set_speed( audio_freeze_interface.speed_dial().value() );
+  audio_freeze_effect.set_speed( audio_freeze_interface.speed_dial().value(), audio_freeze_interface.alt_func() );
 
 #ifdef DEBUG_OUTPUT
   const int processor_usage = AudioProcessorUsage();

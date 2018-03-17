@@ -93,6 +93,7 @@ AUDIO_FREEZE_EFFECT::AUDIO_FREEZE_EFFECT() :
   m_buffer(),
   m_head(0),
   m_speed(0.5f),
+  m_quantise_speed(false),
   m_loop_start(0),
   m_loop_end(freeze_queue_size_in_samples(12) - 1),
   m_sample_size_in_bits(12),
@@ -484,7 +485,7 @@ void AUDIO_FREEZE_EFFECT::update()
   set_bit_depth_impl( m_next_sample_size_in_bits );
   set_length_impl( m_next_length );
   set_centre_impl( m_next_centre );
-  set_speed_impl( m_next_speed );
+  set_speed_impl( m_next_speed, m_quantise_speed );
   set_freeze_impl( m_next_freeze_active );
   set_reverse_impl( m_next_reverse );
 
@@ -595,19 +596,51 @@ void AUDIO_FREEZE_EFFECT::set_length_impl( float length )
   ASSERT_MSG( m_loop_end >= 0 && m_loop_end < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::set_length_impl() post" );
 }
 
-void AUDIO_FREEZE_EFFECT::set_speed_impl( float speed )
+void AUDIO_FREEZE_EFFECT::set_speed_impl( float speed, bool quantise )
 {
-  if( speed < 0.5f )
+  if( quantise )
   {
-    // put in the range 0..1 
-    float r = speed * 2.0f;
-    m_speed = lerp( MIN_SPEED, 1.0f, r ); 
+    constexpr float q_r = 1/ 5.0f;
+    constexpr float q1 = q_r;
+    constexpr float q2 = q_r * 2.0f;
+    constexpr float q3 = q_r * 3.0f;
+    constexpr float q4 = q_r * 4.0f;
+    
+    if( speed <= q1 )
+    {
+      m_speed = 0.25f;
+    }
+    else if( speed <= q2 )
+    {
+      m_speed = 0.5f;
+    }
+    else if( speed <= q3 )
+    {
+      m_speed = 1.0f;
+    }
+    else if( speed <= q4 )
+    {
+      m_speed = 2.0f;
+    }
+    else
+    {
+      m_speed = 4.0f;
+    }
   }
   else
   {
-    // put in the range 0..1
-    float r = ( speed - 0.5f ) * 2.0f;
-    m_speed = lerp( 1.0f, MAX_SPEED, r );    
+    if( speed < 0.5f )
+    {
+      // put in the range 0..1 
+      float r = speed * 2.0f;
+      m_speed = lerp( MIN_SPEED, 1.0f, r ); 
+    }
+    else
+    {
+      // put in the range 0..1
+      float r = ( speed - 0.5f ) * 2.0f;
+      m_speed = lerp( 1.0f, MAX_SPEED, r );    
+    }
   }
 }
 
@@ -771,9 +804,10 @@ void AUDIO_FREEZE_EFFECT::set_centre( float centre )
   //set_centre_impl(centre);
 }
 
-void AUDIO_FREEZE_EFFECT::set_speed( float speed )
+void AUDIO_FREEZE_EFFECT::set_speed( float speed, bool quantise )
 {
   m_next_speed = speed;
+  m_quantise_speed = quantise;
   //set_speed_impl(speed);
 }
 

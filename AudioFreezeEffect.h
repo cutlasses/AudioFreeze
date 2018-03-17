@@ -42,6 +42,7 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
   float                 m_head;     // read head when audio is frozen, write head when not frozen
 
   float                 m_speed;
+  bool                  m_quantise_speed;
 
   int                   m_loop_start;   // index of the first sample to play in loop
   int                   m_loop_end;     // index of the last sample to play in loop
@@ -88,7 +89,7 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
   void                  set_bit_depth_impl( int sample_size_in_bits );
   void                  set_length_impl( float length );
   void                  set_centre_impl( float centre );
-  void                  set_speed_impl( float speed );
+  void                  set_speed_impl( float speed, bool quantise );
   void					        set_freeze_impl( bool active );
   void                  set_reverse_impl( bool reverse );
   
@@ -103,7 +104,7 @@ public:
   void                  set_freeze( bool active );
   void                  set_length( float length );
   void                  set_centre( float centre );
-  void                  set_speed( float speed );
+  void                  set_speed( float speed, bool quantise );
   void                  set_reverse( bool reverse );
   void                  set_cross_fade( bool cross_fade );
   void                  set_bit_depth( int sample_size_in_bits );

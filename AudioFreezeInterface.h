@@ -18,7 +18,7 @@ class AUDIO_FREEZE_INTERFACE
   static const int      NUM_LEDS                        = 3;
   static const int      NUM_MODES                       = 2;
 
-  static const int32_t  BIT_DEPTH_BUTTON_HOLD_TIME_MS   = 2000;
+  static const int32_t  ALT_FUNC_BUTTON_HOLD_TIME_MS   = 2000;
   
   DIAL              m_length_dial;
   DIAL              m_position_dial;
@@ -31,8 +31,8 @@ class AUDIO_FREEZE_INTERFACE
   LED               m_leds[NUM_LEDS];
 
   int               m_current_mode;
-  bool              m_change_bit_depth_valid;
-  bool              m_reduced_bit_depth;
+  bool              m_change_alt_func_valid;
+  bool              m_alt_func;
 
 public:
 
@@ -48,6 +48,6 @@ public:
   const BUTTON& freeze_button() const;
 
   int           mode() const;
-  bool          reduced_bit_depth() const;
+  bool          alt_func() const;
 };
 
