@@ -114,12 +114,14 @@ void BUTTON::update( int32_t time_ms )
 
 LED::LED() :
   m_data_pin( 0 ),
+  m_brightness( 255 ),
   m_is_active( false )
 {
 }
 
 LED::LED( int data_pin ) :
   m_data_pin( data_pin ),
+  m_brightness( 255 ),
   m_is_active( false )
 {
 }
@@ -131,7 +133,7 @@ void LED::set_active( bool active )
 
 void LED::set_brightness( float brightness )
 {
-  m_brightness = brightness * 255.0f;  
+  m_brightness = round_to_int( brightness * 255.0f );  
 }
 
 void LED::setup()

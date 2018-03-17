@@ -12,7 +12,7 @@
 const float MIN_SPEED( 0.25f );
 const float MAX_SPEED( 4.0f );
 
-constexpr float MIN_WOW_FREQ( 1.0f / 4.0f );
+constexpr float MIN_WOW_FREQ( 1.0f / 2.0f );
 constexpr float MAX_WOW_FREQ( 1.0f / 0.25f );
 constexpr float MIN_FLUTTER_FREQ( 1.0f / 0.03f );
 constexpr float MAX_FLUTTER_FREQ( 1.0f / 0.02f );
@@ -495,7 +495,7 @@ void AUDIO_FREEZE_EFFECT::update()
 	
   const float time_inc    = AUDIO_BLOCK_SAMPLES * ( 1.0f / AUDIO_SAMPLE_RATE );
   const float wow_lfo     = m_wow_lfo.next( time_inc );
-  const float flutter_lfo = 0.0f; //m_flutter_lfo.next( time_inc );
+  const float flutter_lfo = m_flutter_lfo.next( time_inc );
 	
   constexpr float MAX_ADJ_WOW( ( 1.0f / 12.0f ) ); // 1 semitone
   constexpr float MAX_ADJ_FLUTTER( ( 1.0f / 12.0f ) ); // 1 semitone

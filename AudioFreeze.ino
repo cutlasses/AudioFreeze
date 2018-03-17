@@ -82,7 +82,7 @@ void loop()
    // use the mix dial to control wow/flutter
   const float wow_flutter_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );
   const float max_wow( 1.0f );
-  const float max_flutter( 0.4f );
+  const float max_flutter( 0.5f );
   audio_freeze_effect.set_wow_amount( wow_flutter_amount * max_wow ); 
   audio_freeze_effect.set_flutter_amount( wow_flutter_amount * max_flutter ); 
 
