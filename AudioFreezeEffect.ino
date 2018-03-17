@@ -105,6 +105,7 @@ AUDIO_FREEZE_EFFECT::AUDIO_FREEZE_EFFECT() :
   m_next_centre(0.5f),
   m_next_speed(0.5f),
   m_next_freeze_active(false),
+  m_next_reverse(false),
   m_wow_lfo( MIN_WOW_FREQ, MAX_WOW_FREQ ),
   m_flutter_lfo( MIN_FLUTTER_FREQ, MAX_FLUTTER_FREQ ),
   m_wow_amount( 0.0f ),
@@ -485,6 +486,7 @@ void AUDIO_FREEZE_EFFECT::update()
   set_centre_impl( m_next_centre );
   set_speed_impl( m_next_speed );
   set_freeze_impl( m_next_freeze_active );
+  set_reverse_impl( m_next_reverse );
 
 
   ASSERT_MSG( trunc_to_int(m_head) >= 0 && trunc_to_int(m_head) < m_buffer_size_in_samples, "AUDIO_FREEZE_EFFECT::update()" );
@@ -719,6 +721,24 @@ void AUDIO_FREEZE_EFFECT::set_freeze_impl( bool active )
 	m_freeze_active = active;
 }
 
+void AUDIO_FREEZE_EFFECT::set_reverse_impl( bool reverse )
+{
+  if( reverse != m_reverse )
+  {
+    // cross fade doesn't currently support reverse
+    if( reverse )
+    {
+      m_cross_fade = false;  
+    }
+    else
+    {
+      m_cross_fade = true;
+    }
+    
+    m_reverse = reverse;
+  }
+}
+
 bool AUDIO_FREEZE_EFFECT::is_freeze_active() const
 {
   return m_freeze_active; 
@@ -731,7 +751,7 @@ void AUDIO_FREEZE_EFFECT::set_freeze( bool active )
 
 void AUDIO_FREEZE_EFFECT::set_reverse( bool reverse )
 {
-  m_reverse = reverse;
+  m_next_reverse = reverse;
 }
 
 void AUDIO_FREEZE_EFFECT::set_cross_fade( bool cross_fade )

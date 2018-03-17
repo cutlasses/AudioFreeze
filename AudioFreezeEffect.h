@@ -59,6 +59,7 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
   float                 m_next_centre;
   float                 m_next_speed;
   bool					        m_next_freeze_active;
+  bool                  m_next_reverse;
 	
   RANDOM_LFO			      m_wow_lfo;
   RANDOM_LFO			      m_flutter_lfo;
@@ -89,6 +90,7 @@ class AUDIO_FREEZE_EFFECT : public AudioStream
   void                  set_centre_impl( float centre );
   void                  set_speed_impl( float speed );
   void					        set_freeze_impl( bool active );
+  void                  set_reverse_impl( bool reverse );
   
 public:
 

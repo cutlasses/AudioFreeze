@@ -79,6 +79,15 @@ void loop()
     }
   }
 
+  if( audio_freeze_interface.mode() == 1 )
+  {
+    audio_freeze_effect.set_reverse( true );
+  }
+  else
+  {
+    audio_freeze_effect.set_reverse( false );
+  }
+
    // use the mix dial to control wow/flutter
   const float wow_flutter_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );
   const float max_wow( 1.0f );
