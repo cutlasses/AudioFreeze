@@ -60,7 +60,7 @@ void AUDIO_FREEZE_INTERFACE::update()
   {
     m_current_mode = ( m_current_mode + 1 ) % NUM_MODES;
   }
-
+/*
   // update mode leds
   for( int x = 0; x < NUM_LEDS - 1; ++x )
   {
@@ -75,7 +75,7 @@ void AUDIO_FREEZE_INTERFACE::update()
     }
 
     led.update();
-  }
+  }*/
 
   // update bit depth led
   LED& bit_depth_led = m_leds[ NUM_LEDS - 1 ];

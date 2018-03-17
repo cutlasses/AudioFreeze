@@ -25,8 +25,8 @@ constexpr int CROSS_FADE_SAMPLES( round_to_int(( AUDIO_SAMPLE_RATE / 1000.0f ) *
 
 int freeze_queue_size_in_samples( int sample_size_in_bits )
 {
-  const int bytes_per_sample = sample_size_in_bits / 8;
-  return FREEZE_QUEUE_SIZE_IN_BYTES / bytes_per_sample;
+  const float bytes_per_sample = sample_size_in_bits / 8.0f;
+  return trunc_to_int( FREEZE_QUEUE_SIZE_IN_BYTES / bytes_per_sample );
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -94,9 +94,9 @@ AUDIO_FREEZE_EFFECT::AUDIO_FREEZE_EFFECT() :
   m_head(0),
   m_speed(0.5f),
   m_loop_start(0),
-  m_loop_end(freeze_queue_size_in_samples(16) - 1),
-  m_sample_size_in_bits(16),
-  m_buffer_size_in_samples( freeze_queue_size_in_samples( 16 ) ),
+  m_loop_end(freeze_queue_size_in_samples(12) - 1),
+  m_sample_size_in_bits(12),
+  m_buffer_size_in_samples( freeze_queue_size_in_samples( 12 ) ),
   m_freeze_active(false),
   m_reverse(false),
   m_cross_fade(true),
@@ -135,19 +135,46 @@ void AUDIO_FREEZE_EFFECT::write_sample( int16_t sample, int index )
 
   switch( m_sample_size_in_bits )
   {
-    case 8:
-    {
-      int8_t sample8                      = (sample >> 8) & 0xff;
-      int8_t* sample_buffer               = reinterpret_cast<int8_t*>(m_buffer);
-      sample_buffer[ index ]              = sample8;
-      break;
-    }
-    case 16:
-    {
-      int16_t* sample_buffer             = reinterpret_cast<int16_t*>(m_buffer);
-      sample_buffer[ index ]             = sample;
-      break;
-    }
+      case 8:
+      {
+          int8_t sample8                          = (sample >> 8) & 0x00ff;
+          int8_t* sample_buffer                   = reinterpret_cast<int8_t*>(m_buffer);
+          sample_buffer[ index ]                  = sample8;
+          break;
+      }
+      case 12:
+      {
+          int8_t* sample_buffer                   = reinterpret_cast<int8_t*>(m_buffer);
+          
+          const int offset_index                  = static_cast<int>( index * 1.5f );
+          
+          ASSERT_MSG( offset_index + 1 < FREEZE_QUEUE_SIZE_IN_BYTES, "Buffer overrun" );
+          
+          if( index & 1 )
+          {
+              // odd indices
+              const uint8_t prev_byte                  = sample_buffer[ offset_index ];
+              sample_buffer[ offset_index ]            = ( (sample & 0xf000) >> 12 ) | (prev_byte & 0x00f0);
+              sample_buffer[ offset_index + 1 ]        = (( sample & 0x0ff0 ) >> 4);
+          }
+          else
+          {
+              // even indices
+              sample_buffer[ offset_index ]            = (sample >> 8);
+              const uint8_t prev_byte                  = sample_buffer[ offset_index + 1 ];
+              sample_buffer[ offset_index + 1 ]        = ( sample & 0x00f0 ) | ( prev_byte & 0x000f );
+              
+              // read sample asserts if you read at the write head ASSERT_MSG( abs( read_sample( index ) - sample ) < 16, "EVEN 12 bit converison failure" );
+          }
+          
+          break;
+      }
+      case 16:
+      {
+          int16_t* sample_buffer                  = reinterpret_cast<int16_t*>(m_buffer);
+          sample_buffer[ index ]                  = sample;
+          break;
+      }
   }
 }
 
@@ -157,22 +184,45 @@ int16_t AUDIO_FREEZE_EFFECT::read_sample( int index ) const
  
   switch( m_sample_size_in_bits )
   {
-    case 8:
-    {
-        const int8_t* sample_buffer    = reinterpret_cast<const int8_t*>(m_buffer);
-        const int8_t sample            = sample_buffer[ index ];
-
-        int16_t sample16               = sample;
-        sample16                       <<= 8;
-
-        return sample16;
-    }
-    case 16:
-    {
-        const int16_t* sample_buffer    = reinterpret_cast<const int16_t*>(m_buffer);
-        const int16_t sample            = sample_buffer[ index ];
-        return sample;
-    }
+      case 8:
+      {
+          const int8_t* sample_buffer    = reinterpret_cast<const int8_t*>(m_buffer);
+          const int8_t sample            = sample_buffer[ index ];
+          
+          int16_t sample16               = sample;
+          sample16                       <<= 8;
+          
+          return sample16;
+      }
+      case 12:
+      {
+          const int8_t* sample_buffer    = reinterpret_cast<const int8_t*>(m_buffer);
+          
+          const int offset_index         = static_cast<int>( index * 1.5f );
+          
+          if( index & 1 )
+          {
+              // odd indices
+              const uint8_t top           = sample_buffer[offset_index] & 0x000f;
+              const uint8_t bottom        = sample_buffer [offset_index + 1 ];
+              return ( (top << 12) | (bottom << 4) );
+          }
+          else
+          {
+              // even indices
+              const uint8_t top           = sample_buffer[offset_index];
+              const uint8_t bottom        = sample_buffer [offset_index + 1 ] & 0x00f0;
+              return ( (top << 8) | bottom );
+          }
+          
+          break;
+      }
+      case 16:
+      {
+          const int16_t* sample_buffer    = reinterpret_cast<const int16_t*>(m_buffer);
+          const int16_t sample            = sample_buffer[ index ];
+          return sample;
+      }
   }
 
   return 0;
@@ -286,7 +336,7 @@ int16_t AUDIO_FREEZE_EFFECT::read_sample_cubic( float current ) const
 	float p2					= read_sample( int_part );
 	
 	float p3;
-	if( int_part < m_sample_size_in_bits - 1)
+	if( int_part < m_buffer_size_in_samples - 1)
 	{
 		p3						= read_sample( int_part + 1 );
 	}

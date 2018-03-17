@@ -78,7 +78,7 @@ void loop()
       audio_mixer.gain( MIX_ORIGINAL_CHANNEL, 1.0f );
     }
   }
-  
+
    // use the mix dial to control wow/flutter
   const float wow_flutter_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );
   const float max_wow( 1.0f );
