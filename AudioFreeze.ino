@@ -53,7 +53,7 @@ void setup()
   //audio_freeze_effect.set_wow_frequency_range( 1.25f, 3.85f );
   //audio_freeze_effect.set_flutter_frequency_range( 14.0f, 25.0f );
 
-  delay(1000);
+  delay(500);
   
   DEBUG_OUTPUT("Setup finished\n");
 }
@@ -91,7 +91,7 @@ void loop()
    // use the mix dial to control wow/flutter
   const float wow_flutter_amount = clamp( audio_freeze_interface.mix_dial().value(), 0.0f, 1.0f );
   const float max_wow( 1.0f );
-  const float max_flutter( 0.5f );
+  const float max_flutter( 0.65f );
   audio_freeze_effect.set_wow_amount( wow_flutter_amount * max_wow ); 
   audio_freeze_effect.set_flutter_amount( wow_flutter_amount * max_flutter ); 
 

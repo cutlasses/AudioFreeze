@@ -157,6 +157,6 @@ int AUDIO_FREEZE_INTERFACE::mode() const
 
 bool AUDIO_FREEZE_INTERFACE::alt_func() const
 {
-  return m_change_alt_func_valid;
+  return m_alt_func;
 }
 

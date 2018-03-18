@@ -502,7 +502,7 @@ void AUDIO_FREEZE_EFFECT::update()
   const float wow_lfo     = m_wow_lfo.next( time_inc );
   const float flutter_lfo = m_flutter_lfo.next( time_inc );
 	
-  constexpr float MAX_ADJ_WOW( ( 1.0f / 12.0f ) ); // 1 semitone
+  constexpr float MAX_ADJ_WOW( ( 2.0f / 12.0f ) ); // 1 semitone
   constexpr float MAX_ADJ_FLUTTER( ( 1.0f / 12.0f ) ); // 1 semitone
   const float wow	      = ( wow_lfo * m_wow_amount )  * MAX_ADJ_WOW;
   const float flutter   = ( flutter_lfo * m_flutter_amount ) * MAX_ADJ_FLUTTER;
