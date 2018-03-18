@@ -9,6 +9,8 @@
 #include "CompileSwitches.h"
 #include "Util.h"
 
+const int DEFAULT_BIT_DEPTH(16);
+
 const float MIN_SPEED( 0.25f );
 const float MAX_SPEED( 4.0f );
 
@@ -95,13 +97,13 @@ AUDIO_FREEZE_EFFECT::AUDIO_FREEZE_EFFECT() :
   m_speed(0.5f),
   m_quantise_speed(false),
   m_loop_start(0),
-  m_loop_end(freeze_queue_size_in_samples(12) - 1),
-  m_sample_size_in_bits(12),
-  m_buffer_size_in_samples( freeze_queue_size_in_samples( 12 ) ),
+  m_loop_end(freeze_queue_size_in_samples(DEFAULT_BIT_DEPTH) - 1),
+  m_sample_size_in_bits(DEFAULT_BIT_DEPTH),
+  m_buffer_size_in_samples( freeze_queue_size_in_samples( DEFAULT_BIT_DEPTH ) ),
   m_freeze_active(false),
   m_reverse(false),
   m_cross_fade(true),
-  m_next_sample_size_in_bits(16),
+  m_next_sample_size_in_bits(DEFAULT_BIT_DEPTH),
   m_next_length(1.0f),
   m_next_centre(0.5f),
   m_next_speed(0.5f),
