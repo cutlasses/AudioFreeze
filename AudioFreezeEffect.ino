@@ -240,12 +240,6 @@ void AUDIO_FREEZE_EFFECT::write_to_buffer( const int16_t* source, int size )
   {
     write_sample( source[x], trunc_to_int(m_head) );
 	  
-	const int diff  = m_head == 0 ? abs( read_sample( m_buffer_size_in_samples - 1 ) - read_sample( trunc_to_int(m_head) ) ) : abs( read_sample( trunc_to_int(m_head) - 1 ) - read_sample( trunc_to_int(m_head) ) );
-	if( trunc_to_int(m_head) > 0 && diff > 2000 )
-	{
-		printf( "WHOOPS" );
-	}
-
     if( trunc_to_int(++m_head) == m_buffer_size_in_samples )
     {
       m_head                        = 0.0f;
